@@ -43,9 +43,10 @@ Koha::WarehouseRequests - Koha WarehouseRequests Object class
 =cut
 
 sub pending {
-    my ( $self, $branchcode ) = @_;
+    my ( $self, $branchcode, $desk_id ) = @_;
     my $params = { status => Koha::WarehouseRequestStatus::Pending, archived => 0 };
     $params->{branchcode} = $branchcode if $branchcode;
+    $params->{desk_id} = $desk_id if $desk_id;
     return Koha::WarehouseRequests->search( $params );
 }
 
@@ -54,9 +55,10 @@ sub pending {
 =cut
 
 sub processing {
-    my ( $self, $branchcode ) = @_;
+    my ( $self, $branchcode, $desk_id ) = @_;
     my $params = { status => Koha::WarehouseRequestStatus::Processing, archived => 0 };
     $params->{branchcode} = $branchcode if $branchcode;
+    $params->{desk_id} = $desk_id if $desk_id;
     return Koha::WarehouseRequests->search( $params );
 }
 
@@ -65,9 +67,10 @@ sub processing {
 =cut
 
 sub waiting {
-    my ( $self, $branchcode ) = @_;
+    my ( $self, $branchcode, $desk_id ) = @_;
     my $params = { status => Koha::WarehouseRequestStatus::Waiting, archived => 0 };
     $params->{branchcode} = $branchcode if $branchcode;
+    $params->{desk_id} = $desk_id if $desk_id;
     return Koha::WarehouseRequests->search( $params );
 }
 
@@ -76,9 +79,10 @@ sub waiting {
 =cut
 
 sub completed {
-    my ( $self, $branchcode ) = @_;
+    my ( $self, $branchcode, $desk_id ) = @_;
     my $params = { status => Koha::WarehouseRequestStatus::Completed, archived => 0 };
     $params->{branchcode} = $branchcode if $branchcode;
+    $params->{desk_id} = $desk_id if $desk_id;
     return Koha::WarehouseRequests->search( $params );
 }
 
@@ -87,9 +91,10 @@ sub completed {
 =cut
 
 sub canceled {
-    my ( $self, $branchcode ) = @_;
+    my ( $self, $branchcode, $desk_id ) = @_;
     my $params = { status => Koha::WarehouseRequestStatus::Canceled, archived => 0 };
     $params->{branchcode} = $branchcode if $branchcode;
+    $params->{desk_id} = $desk_id if $desk_id;
     return Koha::WarehouseRequests->search( $params );
 }
 

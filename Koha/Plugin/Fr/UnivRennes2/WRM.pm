@@ -32,6 +32,7 @@ use Koha::DateUtils;
 use Koha::Items;
 use Koha::Patrons;
 use Koha::Schema;
+use Koha::Desks;
 
 BEGIN {
     my $path = Module::Metadata->find_module_by_name(__PACKAGE__);
@@ -99,17 +100,19 @@ sub tool {
         }
     } else {
         my $template = $self->get_template({ file => 'templates/warehouse-requests.tt' });
-    
+
         my $branchcode = defined( $query->param('branchcode') ) ? $query->param('branchcode') : C4::Context->userenv->{'branch'};
         my $reasonsloop = GetAuthorisedValues($reason_category);
-        
+        my $desk_id = defined( $query->param('desk_id') ) ? $query->param('desk_id') : C4::Context->userenv->{"desk_id"} ;
+
         $template->param(
             branchcode                    => $branchcode,
-            warehouse_requests_pending    => scalar Koha::WarehouseRequests->pending($branchcode),
-            warehouse_requests_processing => scalar Koha::WarehouseRequests->processing($branchcode),
-            warehouse_requests_waiting    => scalar Koha::WarehouseRequests->waiting($branchcode),
+            desk_id                       => $desk_id,
+            warehouse_requests_pending    => scalar Koha::WarehouseRequests->pending($branchcode, $desk_id),
+            warehouse_requests_processing => scalar Koha::WarehouseRequests->processing($branchcode, $desk_id),
+            warehouse_requests_waiting    => scalar Koha::WarehouseRequests->waiting($branchcode, $desk_id),
             reasonsloop     => $reasonsloop,
-        );
+            );
         
         $self->output_html( $template->output );
     }
@@ -170,19 +173,20 @@ sub creation {
         $patron_id         ? Koha::Patrons->find($patron_id)
       : $patron_cardnumber ? Koha::Patrons->find( { cardnumber => $patron_cardnumber } )
       : undef;
-    
+
     if ( $action eq 'create' ) {
         my $borrowernumber = $query->param('borrowernumber');
         my $branchcode     = $query->param('branchcode');
-    
+
         my $itemnumber   = $query->param('itemnumber')   || undef;
         my $volume       = $query->param('volume')       || undef;
         my $issue        = $query->param('issue')        || undef;
         my $date         = $query->param('date')         || undef;
         my $patron_name  = $query->param('patron_name')  || undef;
         my $patron_notes = $query->param('patron_notes') || undef;
-    
-        my $wr =  Koha::WarehouseRequest->new({
+
+        my $warehouse_desks = $self->retrieve_data('warehouse_desks') || '';
+        my $params = {
             borrowernumber => $borrowernumber,
             biblionumber   => $biblio->biblionumber,
             branchcode     => $branchcode,
@@ -192,9 +196,21 @@ sub creation {
             date           => $date,
             patron_name    => $patron_name,
             patron_notes   => $patron_notes
-        })->store();
+        }; 
+
+        my $desk;
+        if ($warehouse_desks) {
+            my $item = Koha::Items->find($itemnumber);
+            my $desk_json = decode_json($warehouse_desks);
+            my $desk_id = $desk_json->{$branchcode}{$item->itype()};
+            if ($desk_id) {
+                $params->{desk_id} = $desk_id;
+            }
+        }
+
+        my $wr =  Koha::WarehouseRequest->new($params)->store();
     }
-    
+
     if ( !$patron && $patron_cardnumber ) {
         my $results = C4::Utils::DataTables::Members::search(
             {
@@ -242,22 +258,22 @@ sub item_is_requestable {
     my ( $self, $itemnumber, $biblionumber ) = @_;
 	my $wr = Koha::Plugin::Fr::UnivRennes2::WRM->new();
 
-    
+
     my @warehouse_branches;
     if (my $wlib = $wr->retrieve_data('warehouse_branches')) {
         @warehouse_branches = split(',', $wlib);
     }
-    
+
     my @warehouse_locations;
     if (my $wloc = $wr->retrieve_data('warehouse_locations')) {
         @warehouse_locations = split(',', $wloc);
     }
-    
+
     my @warehouse_itemtypes;
     if (my $wit = $wr->retrieve_data('warehouse_itemtypes')) {
         @warehouse_itemtypes = split(',', $wit);
     }
-    
+
     my @warehouse_notforloan;
     if (my $wnfl = $wr->retrieve_data('warehouse_notforloan')) {
         @warehouse_notforloan = split(',', $wnfl);
@@ -393,18 +409,20 @@ sub configure {
         my $lang = $splitted[0];
         push @tokens, {key => $lang, text => decode("UTF-8", $self->mbf_read('i18n/'.$file))};
     }
-    
+
     my $template = $self->get_template({ file => 'templates/configure.tt' });
 
     if ( $cgi->param('save') ) {
         my $myconf;
         $myconf->{days_to_keep}                 = $cgi->param('days_to_keep') || 0;
         $myconf->{days_since_archived}          = $cgi->param('days_since_archived') || 0;
-        $myconf->{warehouse_branches}           = join(",", $cgi->multi_param('warehouse_branches')); 
+        $myconf->{warehouse_branches}           = join(",", $cgi->multi_param('warehouse_branches'));
+        $myconf->{warehouse_desks}              = $cgi->param('warehouse_desks') || '';
         $myconf->{warehouse_locations}          = join(",", $cgi->multi_param('warehouse_locations'));
         $myconf->{warehouse_itemtypes}          = join(",", $cgi->multi_param('warehouse_itemtypes'));
         $myconf->{warehouse_notforloan}         = join(",", $cgi->multi_param('warehouse_notforloan'));
         $myconf->{warehouse_opac_enabled}   	= $cgi->param('warehouse_opac_enabled') || 0;
+        $myconf->{warehouse_waiting_enabled}     = $cgi->param('warehouse_waiting_enabled') || 0;
         $myconf->{warehouse_message_disabled}   = $cgi->param('warehouse_message_disabled') || undef;
         $myconf->{rmq_server}                   = $cgi->param('rmq_server');
         $myconf->{rmq_port}                     = $cgi->param('rmq_port');
@@ -440,14 +458,14 @@ sub configure {
 	foreach (sort keys %$locations) {
 		push @locations, { code => $_, description => "$_ - " . $locations->{$_} };
 	}
-		
-	my @warehouse_itemtypes;
+    my $warehouse_desks = $self->retrieve_data('warehouse_desks') || '';
+    my @warehouse_itemtypes;
     if (my $wit = $self->retrieve_data('warehouse_itemtypes')) {
         @warehouse_itemtypes = split(',', $wit);
     }
 	my $itemtypes = Koha::ItemTypes->search_with_localization;
     my %itemtypes = map { $_->{itemtype} => $_ } @{ $itemtypes->unblessed };
-    
+
     my @warehouse_notforloan;
     if (my $wnfl = $self->retrieve_data('warehouse_notforloan')) {
         @warehouse_notforloan = split(',', $wnfl);
@@ -459,27 +477,29 @@ sub configure {
 	}
 
     $template->param(
-        'days_to_keep' 					=> $self->retrieve_data('days_to_keep'),
-        'days_since_archived' 			=> $self->retrieve_data('days_since_archived'),
-        'warehouse_branches' 			=> \@warehouse_branches,
-        'branches' 						=> $branches,
-        'warehouse_locations' 			=> \@warehouse_locations,
-        'locations' 					=> \@locations,
-        'warehouse_itemtypes' 			=> \@warehouse_itemtypes,
-        'itemtypes' 					=> $itemtypes,
-        'warehouse_notforloan' 			=> \@warehouse_notforloan,
-        'notforloan' 					=> \@notforloan,
-        'warehouse_opac_enabled' 		=> $self->retrieve_data('warehouse_opac_enabled'),
-        'warehouse_message_disabled' 	=> $self->retrieve_data('warehouse_message_disabled'),
-        'rmq_server' 					=> $self->retrieve_data('rmq_server'),
-        'rmq_port' 						=> $self->retrieve_data('rmq_port'),
-        'rmq_vhost' 					=> $self->retrieve_data('rmq_vhost'),
-        'rmq_exchange' 					=> $self->retrieve_data('rmq_exchange'),
-        'rmq_user' 						=> $self->retrieve_data('rmq_user'),
-         tokens => \@tokens,
-    );
+        'days_to_keep'                => $self->retrieve_data('days_to_keep'),
+        'days_since_archived'         => $self->retrieve_data('days_since_archived'),
+        'warehouse_branches'          => \@warehouse_branches,
+        'branches'                    => $branches,
+        'warehouse_desks'             => $warehouse_desks,
+        'warehouse_locations'         => \@warehouse_locations,
+        'locations'                   => \@locations,
+        'warehouse_itemtypes'         => \@warehouse_itemtypes,
+        'itemtypes'                   => $itemtypes,
+        'warehouse_notforloan'        => \@warehouse_notforloan,
+        'notforloan'                  => \@notforloan,
+        'warehouse_opac_enabled'      => $self->retrieve_data('warehouse_opac_enabled'),
+        'warehouse_waiting_enabled'   => $self->retrieve_data('warehouse_waiting_enabled'),
+        'warehouse_message_disabled'  => $self->retrieve_data('warehouse_message_disabled'),
+        'rmq_server'                  => $self->retrieve_data('rmq_server'),
+        'rmq_port'                    => $self->retrieve_data('rmq_port'),
+        'rmq_vhost'                   => $self->retrieve_data('rmq_vhost'),
+        'rmq_exchange'                => $self->retrieve_data('rmq_exchange'),
+        'rmq_user'                    => $self->retrieve_data('rmq_user'),
+        'tokens'                      => \@tokens,
+            );
     $self->output_html( $template->output() );
-}
+    }
 
 sub install {
     my ( $self, $args ) = @_;

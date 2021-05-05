@@ -58,6 +58,10 @@
                                 </select>
                             </li>
                             <li>
+                                <label for="warehouse_desks"><span class="label" data-i18n-key="ENABLED_DESKS"></span>: </label>
+                                    <textarea id="warehouse_desks" name="warehouse_desks" rows="20" cols="40">[% warehouse_desks %]</textarea>
+                            </li>
+                            <li>
                                 <label for="warehouse_locations"><span class="label" data-i18n-key="ENABLED_LOC"></span>: </label>
                                 <select id="warehouse_locations" name="warehouse_locations" multiple>
                                     [% FOREACH l IN locations %]
@@ -92,7 +96,12 @@
                                 <span class="hint"> Feature not enabled for now</span>
 
                             </li>
-
+                                <label for="warehouse_waiting_enabled"><span class="label" data-i18n-key="ENABLED_WAITING"></span>: </label>
+                                [% IF warehouse_waiting_enabled %]
+                                    <input name="warehouse_waiting_enabled" id="warehouse_waiting_enabled" value="1" type="checkbox" checked>
+                                [% ELSE %]
+                                    <input name="warehouse_waiting_enabled" id="warehouse_waiting_enabled" value="1" type="checkbox">
+                                [% END %]
                             <li>
                                 <label for="warehouse_message_disabled"><span class="label" data-i18n-key="ALERT_IF_DISABLED"></span>: </label>
                                  <textarea name="warehouse_message_disabled" id="warehouse_message_disabled">[% warehouse_message_disabled %]</textarea>

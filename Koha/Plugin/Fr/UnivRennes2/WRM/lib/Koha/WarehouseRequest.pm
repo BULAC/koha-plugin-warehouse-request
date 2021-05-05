@@ -51,7 +51,7 @@ Koha::WarehouseRequest - Koha Warehouse Request Object class
 sub open {
     my ($self) = @_;
 
-    $self->status(Koha::WarehouseRequestStatus::Pending);
+    $self->status(Koha::WarehouseRequestStatus->Pending);
     $self->SUPER::store();
     $self->notify();
     return $self;
@@ -65,7 +65,7 @@ sub open {
 sub process {
     my ($self) = @_;
 
-    $self->status(Koha::WarehouseRequestStatus::Processing);
+    $self->status(Koha::WarehouseRequestStatus->Processing);
     $self->store();
     return $self;
 }
@@ -78,7 +78,7 @@ sub wait {
     my ($self, $days_to_keep ) = @_;
     my $deadline = $self->calculate_deadline( $days_to_keep );
 
-    $self->status(Koha::WarehouseRequestStatus::Waiting);
+    $self->status(Koha::WarehouseRequestStatus->Waiting);
     $self->deadline( $deadline );
     $self->store();
     $self->notify();
@@ -92,7 +92,7 @@ sub wait {
 sub complete {
     my ($self) = @_;
 
-    $self->status(Koha::WarehouseRequestStatus::Completed);
+    $self->status(Koha::WarehouseRequestStatus->Completed);
     $self->store();
     return $self;
 }
@@ -104,7 +104,7 @@ sub complete {
 sub cancel {
     my ( $self, $notes ) = @_;
 
-    $self->status(Koha::WarehouseRequestStatus::Canceled);
+    $self->status(Koha::WarehouseRequestStatus->Canceled);
     $self->notes($notes) if $notes;
     $self->store();
     $self->notify();

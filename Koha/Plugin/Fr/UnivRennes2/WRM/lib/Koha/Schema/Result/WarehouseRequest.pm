@@ -6,7 +6,7 @@ package Koha::Schema::Result::WarehouseRequest;
 
 =head1 NAME
 
-Koha::Schema::WarehouseRequests::Result::WarehouseRequest
+Koha::Schema::Result::WarehouseRequest
 
 =cut
 
@@ -53,6 +53,12 @@ __PACKAGE__->table("warehouse_requests");
   is_foreign_key: 1
   is_nullable: 1
   size: 10
+
+=head2 desk_id
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 1
 
 =head2 volume
 
@@ -109,9 +115,11 @@ __PACKAGE__->table("warehouse_requests");
   data_type: 'timestamp'
   datetime_undef_if_invalid: 1
   is_nullable: 1
-  
-=head2 gonenoaddress
+
+=head2 archived
+
   data_type: 'tinyint'
+  default_value: 0
   is_nullable: 0
 
 =cut
@@ -127,6 +135,8 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "branchcode",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 10 },
+  "desk_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "volume",
   { data_type => "text", is_nullable => 1 },
   "issue",
@@ -168,7 +178,7 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "archived",
-  { data_type => "tinyint", is_nullable => 0 },
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -189,13 +199,13 @@ __PACKAGE__->set_primary_key("id");
 
 Type: belongs_to
 
-Related object: L<Koha::Schema::WarehouseRequests::Result::Biblio>
+Related object: L<Koha::Schema::Result::Biblio>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "biblionumber",
-  "Koha::Schema::WarehouseRequests::Result::Biblio",
+  "Koha::Schema::Result::Biblio",
   { biblionumber => "biblionumber" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
@@ -204,13 +214,13 @@ __PACKAGE__->belongs_to(
 
 Type: belongs_to
 
-Related object: L<Koha::Schema::WarehouseRequests::Result::Borrower>
+Related object: L<Koha::Schema::Result::Borrower>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "borrowernumber",
-  "Koha::Schema::WarehouseRequests::Result::Borrower",
+  "Koha::Schema::Result::Borrower",
   { borrowernumber => "borrowernumber" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
@@ -219,14 +229,34 @@ __PACKAGE__->belongs_to(
 
 Type: belongs_to
 
-Related object: L<Koha::Schema::WarehouseRequests::Result::Branch>
+Related object: L<Koha::Schema::Result::Branch>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "branchcode",
-  "Koha::Schema::WarehouseRequests::Result::Branch",
+  "Koha::Schema::Result::Branch",
   { branchcode => "branchcode" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "SET NULL",
+    on_update     => "CASCADE",
+  },
+);
+
+=head2 desk
+
+Type: belongs_to
+
+Related object: L<Koha::Schema::Result::Desk>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "desk",
+  "Koha::Schema::Result::Desk",
+  { desk_id => "desk_id" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",
@@ -239,13 +269,13 @@ __PACKAGE__->belongs_to(
 
 Type: belongs_to
 
-Related object: L<Koha::Schema::WarehouseRequests::Result::Item>
+Related object: L<Koha::Schema::Result::Item>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "itemnumber",
-  "Koha::Schema::WarehouseRequests::Result::Item",
+  "Koha::Schema::Result::Item",
   { itemnumber => "itemnumber" },
   {
     is_deferrable => 1,
@@ -256,11 +286,9 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2019-07-08 13:18:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fCsI/NXPvFHf9SpcWMtdYQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-04-29 15:48:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:uC3Zttso1mw8Z1yyUGysPg
 
-__PACKAGE__->add_columns(
-    '+archived' => { is_boolean => 1 }
-);
 
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
