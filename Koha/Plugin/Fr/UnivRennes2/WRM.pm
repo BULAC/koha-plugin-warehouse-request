@@ -90,7 +90,7 @@ sub tool {
     my ( $self, $args ) = @_;
 
     my $query = $self->{'cgi'};
-    
+
     if ( defined $query->param('op') ) {
         if ( $query->param('op') eq 'creation' ) {
             $self->creation();
@@ -117,40 +117,40 @@ sub tool {
 
 sub creation {
     my ( $self, $args ) = @_;
-    
+
     my $query = $self->{'cgi'};
     my $template = $self->get_template({ file => 'templates/request-warehouse.tt' });
-    
+
     my $expiry = 0; # flag set if patron account has expired
     my $today = output_pref({ dt => dt_from_string, dateformat => 'iso', dateonly => 1 });
-    
+
     my $action            = $query->param('action') || q{};
     my $biblionumber      = $query->param('biblionumber');
     my $patron_cardnumber = $query->param('patron_cardnumber');
     my $patron_id         = $query->param('patron_id');
-    
+
     my $biblio = Koha::Biblios->find($biblionumber);
-    
+
     my @warehouse_branches;
     if (my $wlib = $self->retrieve_data('warehouse_branches')) {
         @warehouse_branches = split(',', $wlib);
     }
-    
+
     my @warehouse_locations;
     if (my $wloc = $self->retrieve_data('warehouse_locations')) {
         @warehouse_locations = split(',', $wloc);
     }
-    
+
     my @warehouse_itemtypes;
     if (my $wit = $self->retrieve_data('warehouse_itemtypes')) {
         @warehouse_itemtypes = split(',', $wit);
     }
-    
+
     my @warehouse_notforloan;
     if (my $wnfl = $self->retrieve_data('warehouse_notforloan')) {
         @warehouse_notforloan = split(',', $wnfl);
     }
-   
+
     my $criterias = {
         biblionumber => $biblionumber,
         location => \@warehouse_locations,
@@ -158,10 +158,10 @@ sub creation {
         itype => \@warehouse_itemtypes,
         notforloan => \@warehouse_notforloan
     };
-    
+
     if ($biblio->itemtype ne 'REVUE') {
         $criterias->{itemnumber} = {
-            'NOT IN' => \"(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED') AND itemnumber IS NOT NULL)"
+            'NOT IN' => "(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED') AND itemnumber IS NOT NULL)"
         };
         $criterias->{onloan} = undef
     }
@@ -202,9 +202,9 @@ sub creation {
                 dt_params    => { iDisplayLength => -1 },
             }
         );
-    
+
         my $patrons = $results->{patrons};
-    
+
         if ( scalar @$patrons == 1 ) {
             $patron = Koha::Patrons->find( $patrons->[0]->{borrowernumber} );
         }
@@ -215,18 +215,18 @@ sub creation {
             $template->param( no_patrons_found => $patron_cardnumber );
         }
     }
-    
+
     if ($patron) {
         
         my $borrower = $patron->unblessed;
         my $expiry_date = $borrower->{dateexpiry};
-    
+
         if ($expiry_date and $expiry_date ne '0000-00-00' and
             Date_to_Days(split /-/,$today) > Date_to_Days(split /-/,$expiry_date)) {
             $expiry = 1;
         }
     }
-    
+
     $template->param(
         biblio => $biblio,
         items => \@items,
@@ -234,7 +234,7 @@ sub creation {
         expiry => $expiry,
         requests => scalar Koha::WarehouseRequests->search({ biblionumber => $biblio->biblionumber, archived => 0 })
     );
-    
+
     $self->output_html( $template->output );
 }
 
@@ -273,7 +273,7 @@ sub item_is_requestable {
         notforloan => \@warehouse_notforloan
     };
 	$criterias->{itemnumber} = {
-            'NOT IN' => \"(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED'))"
+            'NOT IN' => "(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED'))"
         };
     $criterias->{onloan} = undef;
 
@@ -284,12 +284,12 @@ sub item_is_requestable {
 
 sub ticket {
     my ( $self, $args ) = @_;
-    
+
     my $query = $self->{'cgi'};
     my $id = $query->param('id');
-    
+
     my $slip = Koha::WarehouseRequestSlip::getTicket($query, $id);
-    
+
     print "Content-type: application/pdf\nCharset: utf-8\n\n";
     binmode(STDOUT);
     print $slip;
@@ -424,7 +424,7 @@ sub configure {
             $template->param( 'config_success' => 'CONF_SUCCESS' );
         }
     }
-    
+
     my @warehouse_branches;
     if (my $wlib = $self->retrieve_data('warehouse_branches')) {
         @warehouse_branches = split(',', $wlib);
@@ -576,10 +576,10 @@ sub uninstall {
 
 sub api_routes {
     my ( $self, $args ) = @_;
-    
+
     my $spec_str = $self->mbf_read('API/openapi.json');
     my $spec     = decode_json($spec_str);
-    
+
     return $spec;
 }
 
@@ -594,7 +594,7 @@ sub static_routes {
 
 sub api_namespace {
     my ( $self ) = @_;
-    
+
     return 'wrm';
 }
 
