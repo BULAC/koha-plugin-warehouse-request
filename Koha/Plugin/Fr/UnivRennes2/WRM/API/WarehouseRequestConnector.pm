@@ -22,7 +22,7 @@ use Authen::CAS::Client;
 use Koha::AuthorisedValues;
 use Koha::Items;
 use Koha::Library;
-use Koha::Plugin::Fr::UnivRennes2::WRM;
+#use Koha::Plugin::Fr::UnivRennes2::WRM;
 use Mojo::Base 'Mojolicious::Controller';
 
 sub update_status {
@@ -54,6 +54,27 @@ sub update_status {
         }
         elsif ( $action eq 'wait' ) {
             $wr = $wr->wait( $plugin->get_days_to_keep );
+            if ($plugin->retrieve_data('warehouse_waiting_enabled')) {
+                use C4::Reserves;
+                use DateTime::Duration;
+                use Koha::DateUtils;
+                my $canitembereserved = CanItemBeReserved( $wr->borrower->borrowernumber, $wr->item->itemnumber );
+                if ($canitembereserved->{'status'} eq 'OK') {
+                    $wr = $wr->complete();
+                    my $resid = AddReserve({
+                        branchcode       => $wr->borrower->branchcode,
+                        borrowernumber   => $wr->borrower->borrowernumber,
+                        biblionumber     => $wr->item->biblionumber,
+                        priority         => 0,
+                        reservation_date => output_pref({ dt => DateTime->now, dateformat => 'iso' , dateonly => 1 }),
+                        resevenotes      => 'FROM_STACKS',
+                        itemnumber       => $wr->item->itemnumber(),
+                        found            => 'W',
+                        itemtype          => $wr->item->itype()
+                                           });
+                    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $wr->desk_id);
+                }
+            }
         }
         elsif ( $action eq 'process' ) {
             $wr = $wr->process();
@@ -297,7 +318,7 @@ sub count {
     my $arguments;
     if ($biblionumber) {
         $arguments->{biblionumber} = $biblionumber;
-        $arguments->{status} = { 'NOT IN' => \"('COMPLETED','CANCELED')" };
+        $arguments->{status} = { 'NOT IN' => "('COMPLETED','CANCELED')" };
     } else {
         $arguments->{status} = 'PROCESSING'
     }
