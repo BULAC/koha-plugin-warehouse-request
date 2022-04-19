@@ -18,7 +18,7 @@ use Date::Calc qw(Date_to_Days);
 use C4::Utils::DataTables::Members;
 use C4::Output;
 use C4::Context;
-use C4::Koha; #GetItemTypes
+use C4::Koha qw(GetAuthorisedValues);
 use C4::Letters;
 use C4::Members;
 use C4::Installer qw(TableExists);
@@ -28,7 +28,7 @@ use Koha::AuthorisedValueCategory;
 use Koha::AuthorisedValueCategories;
 use Koha::Biblios;
 use Koha::Database;
-use Koha::DateUtils;
+use Koha::DateUtils qw(dt_from_string output_pref);
 use Koha::Items;
 use Koha::Patrons;
 use Koha::Schema;

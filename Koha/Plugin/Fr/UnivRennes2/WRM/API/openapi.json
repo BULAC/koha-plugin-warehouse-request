@@ -90,6 +90,156 @@
             }
         }
     },
+    "/add_barcode": {
+        "get": {
+            "x-mojo-to": "Fr::UnivRennes2::WRM::API::WarehouseRequestConnector#add_barcode",
+            "operationId": "addbarcodeWR",
+            "tags": ["items"],
+            "produces": [
+                "application/json"
+            ],
+            "parameters": [{
+                "name": "itemnumber",
+                "in": "query",
+                "description": "Requested item biblionumber",
+                "required": true,
+                "type": "integer"
+            }, {
+                "name": "barcode",
+                "in": "query",
+                "description": "Requested item itemnumber",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Successness of the status update",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "description": "Tells if the action succeeded",
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "404": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "502": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": {
+                    "plugins": "tool"
+                }
+            }
+        }
+    },
+    "/get_itemnumber": {
+        "get": {
+            "x-mojo-to": "Fr::UnivRennes2::WRM::API::WarehouseRequestConnector#get_itemnumber",
+            "operationId": "getitemnumberWR",
+            "tags": ["items"],
+            "produces": [
+                "application/json"
+            ],
+            "parameters": [{
+                "name": "wrmid",
+                "in": "query",
+                "description": "Request id",
+                "required": true,
+                "type": "integer"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Successness of the status update",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "description": "Tells if the action succeeded",
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "404": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "502": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": {
+                                "description": "An explanation for the error",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": {
+                    "plugins": "tool"
+                }
+            }
+        }
+    },
     "/request": {
         "get": {
             "x-mojo-to": "Fr::UnivRennes2::WRM::API::WarehouseRequestConnector#request",
@@ -121,6 +271,102 @@
                 "in": "query",
                 "description": "Request branchcode",
                 "required": false,
+                "type": "string"
+            }, {
+                "name": "type",
+                "in": "query",
+                "description": "Requested item type",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "volume",
+                "in": "query",
+                "description": "Requested item volume",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "issue",
+                "in": "query",
+                "description": "Requested item issue",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "year",
+                "in": "query",
+                "description": "Requested item year",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "message",
+                "in": "query",
+                "description": "Request comment",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "ticket",
+                "in": "query",
+                "description": "CAS ticket",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "callback",
+                "in": "query",
+                "description": "JSONP Callback",
+                "required": false,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Successness of the creation"
+                },
+                "404": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "string",
+                        "description": "JSONP formatted error"
+                    }
+                },
+                "502": {
+                    "description": "An error occured",
+                    "schema": {
+                        "type": "string",
+                        "description": "JSONP formatted error"
+                    }
+                }
+            }
+        }
+    },
+    "/opac-request": {
+        "get": {
+            "x-mojo-to": "Fr::UnivRennes2::WRM::API::WarehouseRequestConnector#opac_request",
+            "operationId": "createWRfromopac",
+            "tags": ["warehouserequests"],
+            "produces": [
+                "application/json"
+            ],
+            "parameters": [{
+                "name": "biblionumber",
+                "in": "query",
+                "description": "Requested item biblionumber",
+                "required": true,
+                "type": "integer"
+            }, {
+                "name": "itemnumber",
+                "in": "query",
+                "description": "Requested item itemnumber",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "callnumber",
+                "in": "query",
+                "description": "Requested item callnumber",
+                "required": false,
+                "type": "string"
+            }, {
+                "name": "branchcode",
+                "in": "query",
+                "description": "Request branchcode",
+                "required": true,
                 "type": "string"
             }, {
                 "name": "type",

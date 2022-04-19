@@ -25,6 +25,8 @@ use Koha::Library;
 #use Koha::Plugin::Fr::UnivRennes2::WRM;
 use Mojo::Base 'Mojolicious::Controller';
 
+use Mojo::JSON qw(decode_json encode_json);
+
 sub update_status {
     require Koha::WarehouseRequest;
     require Koha::WarehouseRequests;
@@ -55,9 +57,9 @@ sub update_status {
         elsif ( $action eq 'wait' ) {
             $wr = $wr->wait( $plugin->get_days_to_keep );
             if ($plugin->retrieve_data('warehouse_waiting_enabled')) {
-                use C4::Reserves;
+                use C4::Reserves qw(AddReserve CanItemBeReserved ModReserveAffect);
                 use DateTime::Duration;
-                use Koha::DateUtils;
+                use Koha::DateUtils qw(output_pref);
                 my $canitembereserved = CanItemBeReserved( $wr->borrower->borrowernumber, $wr->item->itemnumber );
                 if ($canitembereserved->{'status'} eq 'OK') {
                     $wr = $wr->complete();
@@ -134,9 +136,9 @@ sub check_requestable_items {
     };
     
     if ($biblio->itemtype ne 'REVUE') {
-#         $criterias->{itemnumber} = {
-#             'NOT IN' => \"(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED'))"
-#         };
+        $criterias->{itemnumber} = {
+            'NOT IN' => "(SELECT itemnumber FROM warehouse_requests WHERE status NOT IN ('COMPLETED','CANCELED'))"
+        };
         $criterias->{onloan} = undef
     }
     
@@ -219,7 +221,28 @@ sub request {
         })->single();
     } else {
         $item = Koha::Items->find({ itemnumber => $itemnumber });
-                if (Koha::WarehouseRequests->search({
+        if ($item->notforloan) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_NOT_AVAILABLE"}',
+                format => $contenttype
+                );
+        }
+        if ($item->checkout) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_CHECKED_OUT"}',
+                format => $contenttype
+                );
+        }
+        if ($item->holds->search()->count) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_RESERVED"}',
+                format => $contenttype
+                );
+        }
+        if (Koha::WarehouseRequests->search({
             borrowernumber => $user->borrowernumber,
             itemnumber => $item->itemnumber,
             status => 'PENDING'
@@ -264,6 +287,266 @@ sub request {
         format => $contenttype
     );
 }
+
+sub add_barcode {
+
+    my $c = shift->openapi->valid_input or return;
+    
+    my $itemnumber = $c->validation->param('itemnumber');
+    if ($itemnumber !~ /^[0-9]+$/) {
+        return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'failed',
+                error      => 'EBADITEMNUMBER',
+                itemnumber => $itemnumber,
+                barcode    => '',
+            });
+    }
+    my $item = Koha::Items->find($itemnumber);
+    if (! $item) {
+        return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'failed',
+                error      => 'EBADITEM',
+                itemnumber => $itemnumber,
+                barcode    => '',
+            });
+    }
+    if ($item->barcode) {
+        return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'failed',
+                error      => 'EALREADYGOTBARCODE',
+                itemnumber => $itemnumber,
+                barcode    => $item->barcode,
+            });        
+    }
+ 
+    my $barcode    = $c->validation->param('barcode');
+    unless ($barcode =~ /^[0-9]{10}$/ or $barcode =~ /^[0-9]{14}$/) {
+        return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'failed',
+                error      => 'EBADBARCODE',
+                itemnumber => $itemnumber,
+                barcode    => $barcode,
+            });
+    }
+
+    $item->barcode($barcode)->store;
+    return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'success',
+                itemnumber => $itemnumber,
+                barcode    => $barcode,
+        });
+}
+
+sub get_itemnumber {
+    require Koha::WarehouseRequest;
+    require Koha::WarehouseRequests;
+
+    my $c = shift->openapi->valid_input or return;
+    
+    my $wrmid = $c->validation->param('wrmid');
+    my $wr = Koha::WarehouseRequests->find($wrmid);
+    if ($wr) {
+        return $c->render(
+            status  => 200,
+            openapi => {
+                state      => 'success',
+                itemnumber => $wr->itemnumber,
+                title      => $wr->item->biblio->title,
+                author     => $wr->item->biblio->author,
+                callnumber => $wr->item->itemcallnumber,
+                enumchron  => $wr->item->enumchron,
+                barcode    => $wr->item->barcode,
+            });
+    }
+    else {
+        return $c->render(
+            status  => 500,
+            openapi => {
+                state => 'failed',
+                error => 'bad id',
+                id    => $wrmid,
+            });
+    }
+}
+
+sub opac_request {
+    require Koha::WarehouseRequest;
+    require Koha::WarehouseRequests;
+    require Koha::WarehouseRequestStatus;
+    use C4::Reserves qw(AddReserve CanItemBeReserved ModReserveAffect);
+
+    my $c = shift->openapi->valid_input or return;
+    
+    my $contenttype = $c->res->headers->content_type('application/json');
+    
+    my $user;
+    if ( $c->stash('koha.user') ) {
+        $user = $c->stash('koha.user');
+    } else {
+        my $cas_url = C4::Context->preference('casServerUrl');
+        my $cas = Authen::CAS::Client->new( $cas_url );
+        my $ticket = $c->validation->param('ticket');
+        my $uri = $c->req->url->to_abs;
+        my $userid;
+        if ( !defined $ticket || $ticket eq '' ) {
+            my $login_url = $cas->login_url($uri);
+            return $c->redirect_to($login_url);
+        } else {
+            $uri =~ s/[&?]ticket=[^&]+//g;
+            my $val = $cas->service_validate( $uri, $ticket);
+            if ( $val->is_success() ) {
+                $userid = $val->user();
+            }
+        }
+        $user = Koha::Patrons->find({ userid => $userid });
+    }
+
+    unless ( $user ) {
+        return $c->render(
+            status => 200,
+            data => "{state:'failed',error:'USER_NOT_FOUND'}",
+            format => $contenttype
+        );
+    }
+    
+    my $biblionumber = $c->validation->param('biblionumber'); 
+    my $itemnumber   = $c->validation->param('itemnumber');
+    my $callnumber   = $c->validation->param('callnumber');
+    my $type         = $c->validation->param('type');
+    my $volume       = $c->validation->param('volume') // '';
+    my $issue        = $c->validation->param('issue') // '';
+    my $year         = $c->validation->param('year') // '';
+    my $message      = $c->validation->param('message');
+    my $branchcode   = $c->validation->param('branchcode');
+    
+    my $item;
+    my $canitembereserved = CanItemBeReserved( $user->borrowernumber, $itemnumber );
+    unless ($canitembereserved->{status} eq 'OK') {
+        return $c->render(
+            status => 200,
+            openapi => {
+                state => 'failed',
+                error => $canitembereserved->{status}
+            },
+            format => $contenttype
+        );
+    }
+    
+    if ( $type eq 'JOUR' ) {
+        if (($volume eq "" && $issue eq "") || $year eq "") {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"MISSING_INFO_JOURNAL"}',
+                format => $contenttype
+            );
+        }
+        $item = Koha::Items->search({
+            biblionumber => $biblionumber
+        })->single();
+    } else {
+        $item = Koha::Items->find({ itemnumber => $itemnumber });
+        if ($item->notforloan) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_NOT_AVAILABLE"}',
+                format => $contenttype
+                );
+        }
+        if ($item->checkout) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_CHECKED_OUT"}',
+                format => $contenttype
+                );
+        }
+        if ($item->holds->search()->count) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ITEM_RESERVED"}',
+                format => $contenttype
+                );
+        }
+        if (
+            Koha::WarehouseRequests->search({ itemnumber => $item->itemnumber,
+                                              status => 'PENDING'
+                                            })->count > 0
+            ||
+            Koha::WarehouseRequests->search({ itemnumber => $item->itemnumber,
+                                              status => 'WAITING'
+                                            })->count > 0
+            ||
+            Koha::WarehouseRequests->search({ itemnumber => $item->itemnumber,
+                                              status => 'PROCESSING'
+                                            })->count > 0
+            ) {
+            return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"ALREADY_REQUESTED"}',
+                format => $contenttype
+            );
+        }
+	my $wr_count = Koha::WarehouseRequests->search( { borrowernumber => $user->borrowernumber, status => 'PENDING'    } )->count();
+	$wr_count   += Koha::WarehouseRequests->search( { borrowernumber => $user->borrowernumber, status => 'WAITING'    } )->count();
+	$wr_count   += Koha::WarehouseRequests->search( { borrowernumber => $user->borrowernumber, status => 'PROCESSING' } )->count();
+	if ( $wr_count > 15 ) {
+	    return $c->render(
+                status => 200,
+                data => '{"state":"failed","error":"QUOTA_EXCEEDED"}',
+                format => $contenttype
+		);
+	}
+    }
+    
+    if ( $user->is_expired ) {
+        return $c->render(
+            status => 200,
+            data => '{"state":"failed","error":"USER_NOT_ALLOWED"}',
+            format => $contenttype
+        );
+    }
+    my $dbh = C4::Context->dbh;
+    my $query = "SELECT plugin_value FROM plugin_data WHERE plugin_data.plugin_class = 'Koha::Plugin::Fr::UnivRennes2::WRM' AND plugin_key = 'warehouse_desks';";
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    my $res_row = $sth->fetchrow_arrayref();
+    my $itype_desk_json = $res_row->[0];
+    my $itype_desk =  decode_json($itype_desk_json);
+    my $wr = Koha::WarehouseRequest->new({
+        borrowernumber => $user->borrowernumber,
+        biblionumber => $item->biblionumber,
+        branchcode => $branchcode,
+        itemnumber => $item->itemnumber,
+        volume => $volume,
+        issue => $issue,
+        date => $year,
+	desk_id => $itype_desk->{$branchcode}->{$item->itype},
+        patron_notes => $message
+    })->store();
+    
+    if ( $wr ) {
+        return $c->render(
+            status => 200,
+            data => '{"state":"success"}',
+            format => $contenttype
+        );
+    }
+    return $c->render(
+        status => 500,
+        data => "{error:'Erreur lors de la transmission de la demande'}",
+        format => $contenttype
+    );
+}
+
 
 sub list {
     require Koha::WarehouseRequest;
@@ -343,7 +626,8 @@ sub _to_api {
     };
     $request->{item} = {
         "holdingbranch" => $item->holding_branch->branchname,
-        "location" => Koha::AuthorisedValues->find_by_koha_field( { kohafield => 'items.location', authorised_value => $item->location } )->lib,
+         #"location" => Koha::AuthorisedValues->find_by_koha_field( { kohafield => 'items.location', authorised_value => $item->location } )->lib,
+        "location" => $item->location,
         "itemtype" => Koha::ItemTypes->find( $item->effective_itemtype )->description,
         "itemcallnumber" => $item->itemcallnumber,
         "barcode" => $item->barcode
