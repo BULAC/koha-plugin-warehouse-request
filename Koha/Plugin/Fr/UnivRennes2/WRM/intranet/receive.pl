@@ -12,17 +12,21 @@ use File::Basename qw( dirname fileparse );
 use C4::Reserves qw(AddReserve CanItemBeReserved ModReserveAffect);
 use DateTime::Duration;
 use Koha::DateUtils qw(output_pref);
+use Koha::Patrons;
 #BEGIN {
 #    use Cwd qw(abs_path);
 #    use File::Basename qw( dirname fileparse );
 #    unshift(@INC, dirname(abs_path($1)) . "/lib")#
 #
 #}
-use lib qw(/var/lib/koha/form/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib);
+use lib qw(/var/lib/koha/form/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
+           /var/lib/koha/prod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
+           /var/lib/koha/preprod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib);
 use Koha::WarehouseRequest;
 use Koha::WarehouseRequests;
 use Koha::WarehouseRequestStatus;
 
+use Koha::Desks;
 
 my $intranetpluginDir = dirname(abs_path($0));
 my ($Dir, $pluginDir) = fileparse($intranetpluginDir);
@@ -42,39 +46,80 @@ my ( $template, $librarian, $cookie, $flags ) = get_template_and_user(
 
 my $sessionID = $query->cookie("CGISESSID");
 my $session = get_session($sessionID);
-my $desk_id = C4::Context->userenv->{"desk_id"} || '';
+my $desk_id = C4::Context->userenv->{"desk_id"} // '';
 
-my $barcode = $query->param("barcode");
+my $desk = Koha::Desks->find($desk_id);
 
-if ($barcode) {
-    warn $barcode;
-    $barcode =~ s/^\s*|\s*$//g;
-    $barcode = barcodedecode($barcode) if $barcode;
+my $barcode = $query->param("barcode") // '';
+$barcode =~ s/^\s*|\s*$//g;
+$barcode = barcodedecode($barcode) if $barcode;
 
-    warn $barcode . " nettoyé";
+my $missing_barcode = $query->param("missing_barcode") // '';
+$missing_barcode =~ s/^\s*|\s*$//g;
+$missing_barcode = barcodedecode($missing_barcode) if $missing_barcode;
 
-    my $barcode_type;
-    if ($barcode =~ /^574/) {
-        $barcode_type = "stack_request" ;
-    }
-    elsif ($barcode) {
-        $barcode_type = "item" ;
-    }
+my $wrid    = $query->param("wrid") // '';
+my $op      = $query->param("op") // '';
 
-    warn $barcode_type . " de type ";
 
-    if ($barcode_type eq "stack_request") {
 
-    }
 
-    if ($barcode_type eq "item") {
+my $barcode_type;
+if ($barcode =~ /^574/) {
+    $barcode_type = "stack_request" ;
+}
+elsif ($barcode) {
+    $barcode_type = "item" ;
+}
+
+
+if ($barcode_type eq "item" and $op eq "confirm") {
+    local $@;
+    eval {
         my $item = Koha::Items->find( { 'barcode' => $barcode } );
-        warn 'itemnumber: ' . $item->itemnumber;
-        my $wr   = Koha::WarehouseRequests->find(
-            {
-                'status' => 'PROCESSING',
-                    'itemnumber' => $item->itemnumber,
-            });
+        my $wr   = Koha::WarehouseRequests->find({
+                                                  'status' => 'PROCESSING',
+                                                  'itemnumber' => $item->itemnumber,
+                                                 });
+        my $patron = Koha::Patrons->find($wr->borrowernumber);
+        $template->param(
+                         item   => $item,
+                         patron => $patron,
+                         wrid   => $wr->id,
+                         desk   => $desk,
+                         op     => "confirm",
+                        );
+    };
+    if ($@) {
+        $template->param(error => $@)
+    }
+}
+elsif ($barcode_type eq "stack_request" and $op eq "confirm") {
+    $barcode =~ /^5740*([1-9][0-9]*)$/;
+    my $wrid = $1;
+    local $@;
+    eval {
+        my $wr   = Koha::WarehouseRequests->find($wrid);
+        my $item = Koha::Items->find( $wr->itemnumber );
+        my $patron = Koha::Patrons->find( $wr->borrowernumber );
+        $template->param(
+                         item   => $item,
+                         patron => $patron,
+                         wrid   => $wr->id,
+                         desk   => $desk,
+                         op     => "confirm",
+                        );
+    };
+    if ($@) {
+        $template->param(error => $@)
+    }
+}
+elsif (($barcode_type eq "item" or $missing_barcode) and ($op eq "confirmed" or $op eq "cancel") and $wrid >= 0) {
+        my $wr   = Koha::WarehouseRequests->find($wrid);
+        my $item = Koha::Items->find( $wr->itemnumber );
+        my $patron = Koha::Patrons->find($wr->borrowernumber);
+        $item->barcode($missing_barcode)->store
+          if ($missing_barcode and ! $item->barcode);
         $wr = $wr->complete();
         my $resid = AddReserve({
             branchcode       => $wr->borrower->branchcode,
@@ -88,8 +133,42 @@ if ($barcode) {
             itemtype          => $wr->item->itype()
                                });
         ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
-        
-    }
+        my $res = Koha::Holds->find($resid);
+
+        $template->param(
+                         item    => $item,
+                         reserve => $res,
+                         op      => $op,
+                         patron  => $patron,
+            )
+}
+elsif ($op eq "cancel" and $wrid >= 0) {
+    my $wr = Koha::WarehouseRequests->find($wrid);
+    my $item;
+    $item = Koha::Items->find( $wr->itemnumber );
+    my $patron = Koha::Patrons->find($wr->borrowernumber);
+    $wr = $wr->complete();
+    my $resid = AddReserve({
+                            branchcode       => $wr->borrower->branchcode,
+                            borrowernumber   => $wr->borrower->borrowernumber,
+                            biblionumber     => $wr->item->biblionumber,
+                            priority         => 0,
+                            reservation_date => output_pref({ dt => DateTime->now, dateformat => 'iso' , dateonly => 1 }),
+                            resevenotes      => 'FROM_STACKS',
+                            itemnumber       => $wr->item->itemnumber(),
+                            found            => 'W',
+                            itemtype          => $wr->item->itype()
+                           });
+    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+    my $res = Koha::Holds->find($resid);
+
+    $template->param(
+                     item    => $item,
+                     barcode => $barcode,
+                     reserve => $res,
+                     op      => $op,
+                     patron  => $patron,
+                    )
 }
 
 output_html_with_http_headers $query, $cookie, $template->output;
