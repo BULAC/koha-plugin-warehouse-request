@@ -118,7 +118,7 @@ elsif (($barcode_type eq "item" or $missing_barcode) and ($op eq "confirmed" or 
         my $wr   = Koha::WarehouseRequests->find($wrid);
         my $item = Koha::Items->find( $wr->itemnumber );
         my $patron = Koha::Patrons->find($wr->borrowernumber);
-        $item->barcode($missing_barcode)->store
+        $item->barcode($missing_barcode)->store()
           if ($missing_barcode and ! $item->barcode);
         $wr = $wr->complete();
         my $resid = AddReserve({

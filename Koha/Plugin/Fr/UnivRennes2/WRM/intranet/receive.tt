@@ -99,7 +99,7 @@
                                                     <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
                                                 [% ELSE %]
                                                     <label for="missing_barcode">Entrez un code barre pour le document : </label>
-                                                    <input type="text" name="missing_barcode" value="" required />
+                                                    <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required />
                                                 [% END %]
                                                 <input type="hidden" name="op" value="confirmed" />
                                                 <input type="hidden" name="wrid" value="[% wrid | html %]" />
@@ -142,11 +142,17 @@
                                 <h1>ERREUR !!! [% error %]</h1>
                             [% END %]
                             [% IF op == "confirmed" %]
-                                <h2>Bravo !</h2>
-                                <p>Vous avez mis de côté [% item.biblio.title | html %], [% item.itemcallnumber | html %], pour [% patron.firstname | html %].</p>
+                                <h2>Mise de côté réussie</h2>
+                                <p>Vous avez mis de côté [% item.biblio.title | html %],
+                                    [% IF item.biblio.author %]  [% item.biblio.author | html %], [% END %]
+                                    [% item.itemcallnumber | html %], pour
+                                    [% patron.title | html %]
+                                    [% patron.firstname | html %]
+                                    [% patron.surname | html %]
+                                    <strong>([% patron.cardnumber | html %])</strong>.</p>
                                     <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
-                                        <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber  %]">
-                                        <input type="hidden" name="itemnumber" value="[% item.itemnumber %]">
+                                        <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
+                                        <input type="hidden" name="itemnumber" value="[% item.itemnumber | html %]">
                                         <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
                                         <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
                                         <input type="hidden" name="tab" value="holdwaiting">
@@ -156,7 +162,7 @@
                                     
                             [% END %]
                             [% IF op == "cancel" %]
-                                <h2>Bravo !</h2>
+                                <h2>Il reste une étape pour annuler cette demande</h2>
                                 <p>Vous voulez annuler la réservation de [% item.biblio.title | html %],
                                     [% IF item.biblio.author %][% item.biblio.author |html %], [% END %]
                                     [% item.itemcallnumber | html %],
@@ -164,7 +170,7 @@
                                     [% patron.surname | html %]
                                     <strong>([% patron.cardnumber | html %])</strong>.</p>
                                 <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
-                                    <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber  %]">
+                                    <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber | html %]">
                                     <input type="hidden" name="itemnumber" value="[% item.itemnumber %]">
                                     <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
                                     <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
@@ -301,9 +307,16 @@
     [% INCLUDE 'calendar.inc' %]
     [% END %]
 
-[% INCLUDE 'intranet-bottom.inc' %]
+    [% INCLUDE 'intranet-bottom.inc' %]
+     [% IF op == "confirm" %]
     <script>
      $(document).ready(function() {
+         $('#circ-needsconfirmation-modal').on('shown.bs.modal', function () {
+             $('#barcode').blur();
+             $('#missing_barcode').focus();
+         });
          $('#circ-needsconfirmation-modal').modal('show');
+           //$('#missing_barcode').focus();
      });
     </script>
+     [% END %]

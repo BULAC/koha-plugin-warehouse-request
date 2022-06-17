@@ -337,7 +337,7 @@ sub add_barcode {
             });
     }
 
-    $item->barcode($barcode)->store;
+    $item->barcode($barcode)->store();
     return $c->render(
             status  => 200,
             openapi => {
