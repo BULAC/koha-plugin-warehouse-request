@@ -22,7 +22,7 @@ $(document).ready(function() {
     }
     // Circ homepage button injection
     if ($('#circ_circulation-home').length > 0) {
-        var wrbutton = '<li><a class="circ-button" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing" title="Demandes magasins"><i class="fa fa-file-text-o"></i> Demandes magasins</a></li>';
+        var wrbutton = '<li><a class="circ-button" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing" title="Demandes magasins"><i class="fa fa-file-text-o"></i> Demandes magasins</a></li><li><a class="circ-button" href="/receive.pl" title="Réception"><i class="fa fa-rocket"></i> Réception</a></li>';
         var requestsMenu = $('i.fa-newspaper-o').parents('ul.buttons-list');
         if (requestsMenu.length > 0) {
             requestsMenu.prepend(wrbutton);

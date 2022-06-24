@@ -132,7 +132,7 @@
                                   <select name="action" id="action">
                                       <option value="process">En traitement</option>
                                   </select>
-                                  <input value="Valider" type="submit" />
+                                  <input value="Valider et Imprimer" type="submit" />
                               </div>
                           </div>
                       </fieldset>
@@ -246,7 +246,7 @@
                </div>
                <div id="warehouse-requests-processing">
                    <div class="btn-toolbar">
-                       <a href="/receive.pl" class="btn btn-default"><i class="fa fa-rocket"></i> Faire la réception</a>
+                       <a href="/receive.pl" class="btn btn-default"><i class="fa fa-rocket"></i> Faire la réception ou déclarer le document perdu</a>
                    </div>
                   <div class="wr-processing-none">
                      <p>Il n'y as pas de demande en traitement actuellement.</p>

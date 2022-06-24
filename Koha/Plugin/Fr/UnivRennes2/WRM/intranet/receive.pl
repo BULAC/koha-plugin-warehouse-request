@@ -49,7 +49,7 @@ my $session = get_session($sessionID);
 my $desk_id = C4::Context->userenv->{"desk_id"} // '';
 
 my $desk = Koha::Desks->find($desk_id);
-
+my $error;
 my $barcode = $query->param("barcode") // '';
 $barcode =~ s/^\s*|\s*$//g;
 $barcode = barcodedecode($barcode) if $barcode;
@@ -58,6 +58,14 @@ my $missing_barcode = $query->param("missing_barcode") // '';
 $missing_barcode =~ s/^\s*|\s*$//g;
 $missing_barcode = barcodedecode($missing_barcode) if $missing_barcode;
 
+unless ($missing_barcode =~ /^[0-9]{10}$/ or $missing_barcode =~ /^[0-9]{14}$/) {
+    $error = "$error, mauvais code barre : $missing_barcode";
+    $missing_barcode = ""
+}
+elsif ($missing_barcode =~ /^574/) {
+    $error = "$error, code barre de requête : $missing_barcode";
+    $missing_barcode = ""
+}
 my $wrid    = $query->param("wrid") // '';
 my $op      = $query->param("op") // '';
 
@@ -91,7 +99,7 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                         );
     };
     if ($@) {
-        $template->param(error => $@)
+        $error = "$error, $@";
     }
 }
 elsif ($barcode_type eq "stack_request" and $op eq "confirm") {
@@ -111,7 +119,7 @@ elsif ($barcode_type eq "stack_request" and $op eq "confirm") {
                         );
     };
     if ($@) {
-        $template->param(error => $@)
+        $error = "$error, $@";
     }
 }
 elsif (($barcode_type eq "item" or $missing_barcode) and ($op eq "confirmed" or $op eq "cancel") and $wrid >= 0) {
@@ -130,9 +138,10 @@ elsif (($barcode_type eq "item" or $missing_barcode) and ($op eq "confirmed" or 
             resevenotes      => 'FROM_STACKS',
             itemnumber       => $wr->item->itemnumber(),
             found            => 'W',
-            itemtype          => $wr->item->itype()
+                                itemtype          => $wr->item->itype()
+                                desk_id => $desk_id
                                });
-        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+#        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
         my $res = Koha::Holds->find($resid);
 
         $template->param(
@@ -157,9 +166,10 @@ elsif ($op eq "cancel" and $wrid >= 0) {
                             resevenotes      => 'FROM_STACKS',
                             itemnumber       => $wr->item->itemnumber(),
                             found            => 'W',
-                            itemtype          => $wr->item->itype()
+                            itemtype          => $wr->item->itype(),
+                            desk_id             => $desk_id,
                            });
-    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+#    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
     my $res = Koha::Holds->find($resid);
 
     $template->param(
@@ -170,5 +180,8 @@ elsif ($op eq "cancel" and $wrid >= 0) {
                      patron  => $patron,
                     )
 }
+
+$template->param(error => $error)
+
 
 output_html_with_http_headers $query, $cookie, $template->output;

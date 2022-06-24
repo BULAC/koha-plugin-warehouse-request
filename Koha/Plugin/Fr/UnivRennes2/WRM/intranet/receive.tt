@@ -29,7 +29,7 @@
 [% END %]
 
 [% INCLUDE 'doc-head-open.inc' %]
-<title>Réception &rsaquo; Circulation &rsaquo; Koha</title>
+<title>Réception ou disparition &rsaquo; Circulation &rsaquo; Koha</title>
 [% INCLUDE 'doc-head-close.inc' %]
 </head>
 
@@ -115,7 +115,7 @@
                                                 <input type="hidden" name="op" value="cancel" />
                                                 <input type="hidden" name="wrid" value="[% wrid | html %]" />
                                                 
-                                                <button type="submit" class="deny" accesskey="a"><i class="fa fa-check"></i> Annuler</button>
+                                                <button type="submit" class="deny" accesskey="a"><i class="fa fa-check"></i>Déclarer le document perdu et notifier le lecteur (En deux cliques)</button>
                                             </form>
                                         </div>
                                     </div>
@@ -128,6 +128,7 @@
                                 <fieldset id="circ_returns_checkin">
                                     <div class="show_checkin_dialog" style="float:right;display:none"><button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Show the last checkin message"><i class="fa fa-info"></i></button></div>
                                     <h1>Réception depuis les magasins</h1>
+                                    <p>Si vous devez marquer que le document est perdu et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="hint">Entrez le code barre:</div>
@@ -156,29 +157,29 @@
                                         <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
                                         <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
                                         <input type="hidden" name="tab" value="holdwaiting">
-                                    
-                                        <button type="submit" class="btn btn-default btn-xs"><i class="fa fa-remove"></i> Annuler réservation</button>
                                     </form>
                                     
                             [% END %]
                             [% IF op == "cancel" %]
-                                <h2>Il reste une étape pour annuler cette demande</h2>
-                                <p>Vous voulez annuler la réservation de [% item.biblio.title | html %],
+                                <h2>Il reste une étape pour marquer ce document comme perdu et notifier le lecteur</h2>
+                                <p>Vous voulez annuler marquer perdu [% item.biblio.title | html %],
                                     [% IF item.biblio.author %][% item.biblio.author |html %], [% END %]
                                     [% item.itemcallnumber | html %],
-                                    pour  [% patron.firstname | html %],
+                                    et le notifier à  [% patron.firstname | html %]
                                     [% patron.surname | html %]
                                     <strong>([% patron.cardnumber | html %])</strong>.</p>
-                                <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
-                                    <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber | html %]">
-                                    <input type="hidden" name="itemnumber" value="[% item.itemnumber %]">
-                                    <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
-                                    <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
-                                    <input type="hidden" name="tab" value="holdwaiting">
-                                    
-                                    <button type="submit" class="btn btn-default btn-xs"><i class="fa fa-remove"></i> Confirmer l'annulation de la réservation</button>
-                                </form>
-                                
+                                [% IF Koha.Preference('CanMarkHoldsToPullAsLost') != 'do_not_allow' %]
+                                    <form name="cancelReserve" action="/cgi-bin/koha/circ/pendingreserves.pl" method="post">
+                                        <input type="hidden" name="reserve_id" value="[% reserve.reserve_id %]" />
+                                        [% IF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow' %]
+                                            <input type="hidden" name="op" value="mark_as_lost" />
+                                            <input type="submit" value="Mark item as lost" />
+                                        [% ELSIF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow_and_notify' %]
+                                            <input type="hidden" name="op" value="mark_as_lost_and_notify" />
+                                            <input type="submit" value="Déclarer le document perdu et notifier le lecteur" />
+                                        [% END %]
+                                    </form>
+                                [% END %]
                             [% END %]
                             [% IF ( riloop ) %]
                                 <h2>Checked-in items</h2>
