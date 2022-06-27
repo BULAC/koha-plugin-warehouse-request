@@ -246,10 +246,10 @@
                </div>
                <div id="warehouse-requests-processing">
                    <div class="btn-toolbar">
-                       <a href="/receive.pl" class="btn btn-default"><i class="fa fa-rocket"></i> Faire la réception ou déclarer le document perdu</a>
+                       <a href="/receive.pl" class="btn btn-default" style="border-color: red; font-weight: bold; font-size: x-large; border-width: thick"><i class="fa fa-rocket"></i> Faire la réception ou déclarer le document manquant</a>
                    </div>
                   <div class="wr-processing-none">
-                     <p>Il n'y as pas de demande en traitement actuellement.</p>
+                     <p>Il n'y a pas de demande en traitement actuellement.</p>
                   </div>
                   <!-- 
                   <div class="wr-requests-processing_table_controls">

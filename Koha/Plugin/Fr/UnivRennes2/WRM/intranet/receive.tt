@@ -57,7 +57,7 @@
 
     <div class="main container-fluid">
         <div class="row">
-             <p>Du document [% item.biblio.title | html %], [% item.itemcallnumber | html %]</p>
+<!--             <p>Du document [% item.biblio.title | html %], [% item.itemcallnumber | html %]</p>
                                             <ul>
                                                 <li>
                                                      pour le lecteur  [% patron.firstname | html %],
@@ -68,25 +68,28 @@
                                                     à la banque <strong>[% desk.desk_name | html %]</strong>
                                                 </li>
                                             </ul>
+                                            -->
             <div class="col-sm-12">
                 <main>
                     <div class="row">
                         [% IF op == "confirm" %]
-                            <div id="circ-needsconfirmation-modal" class="modal fade audio-alert-action block">
+                            <div id="circ-needsconfirmation-modal" class="modal fade audio-alert-action block" data-backdrop="static" data-keyboard="false">
                                 <div class="modal-dialog">
 		                    <div class="modal-content">
                                         <div class="modal-header">
                                             <h3>Confirmer la réception</h3>
                                         </div>
                                         <div class="modal-body">
-                                            <p>Du document [% item.biblio.title | html %],
+                                            <p>Du document <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
                                                 [% IF item.biblio.author %][% item.biblio.author | html %], [% END %]
-                                                [% item.itemcallnumber | html %]</p>
+                                                [% item.itemcallnumber | html %][% IF item.barcode %],
+                                                    ([% item.barcode |html %])
+                                                [% END %]</p>
                                             <ul>
                                                 <li>
                                                     pour le lecteur [% patron.firstname | html %],
                                                     [% patron.surname | html %]
-                                                    <strong> [% patron.cardnumber | html %]</strong>
+                                                    <strong>([% patron.cardnumber | html %])</strong>
 			                        </li>
                                                 <li>
                                                     à la banque <strong>[% desk.desk_name | html %]<strong>
@@ -99,12 +102,12 @@
                                                     <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
                                                 [% ELSE %]
                                                     <label for="missing_barcode">Entrez un code barre pour le document : </label>
-                                                    <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required />
+                                                    <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required /><br/>
                                                 [% END %]
                                                 <input type="hidden" name="op" value="confirmed" />
                                                 <input type="hidden" name="wrid" value="[% wrid | html %]" />
                                                 
-                                                <button type="submit" class="approve" accesskey="y"><i class="fa fa-check"></i>Confirmer</button>
+                                                <button type="submit" class="approve" accesskey="y"><i class="fa fa-check"></i> Confirmer</button>
                                             </form>
                                             <form method="post" action="/receive.pl" autocomplete="off">
                                                 [% IF item.barcode %]
@@ -115,7 +118,7 @@
                                                 <input type="hidden" name="op" value="cancel" />
                                                 <input type="hidden" name="wrid" value="[% wrid | html %]" />
                                                 
-                                                <button type="submit" class="deny" accesskey="a"><i class="fa fa-check"></i>Déclarer le document perdu et notifier le lecteur (En deux cliques)</button>
+                                                <button type="submit" class="deny" accesskey="a"><i class="fa fa-times"></i> Déclarer le document manquant et notifier le lecteur</button>
                                             </form>
                                         </div>
                                     </div>
@@ -128,7 +131,7 @@
                                 <fieldset id="circ_returns_checkin">
                                     <div class="show_checkin_dialog" style="float:right;display:none"><button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Show the last checkin message"><i class="fa fa-info"></i></button></div>
                                     <h1>Réception depuis les magasins</h1>
-                                    <p>Si vous devez marquer que le document est perdu et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
+                                    <p>Si vous devez marquer que le document est manquant et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="hint">Entrez le code barre:</div>
@@ -144,13 +147,14 @@
                             [% END %]
                             [% IF op == "confirmed" %]
                                 <h2>Mise de côté réussie</h2>
-                                <p>Vous avez mis de côté [% item.biblio.title | html %],
+                                <p>Vous avez mis de côté <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
                                     [% IF item.biblio.author %]  [% item.biblio.author | html %], [% END %]
-                                    [% item.itemcallnumber | html %], pour
+                                    [% item.itemcallnumber | html %], ([% item.barcode | html %]) pour
                                     [% patron.title | html %]
                                     [% patron.firstname | html %]
                                     [% patron.surname | html %]
-                                    <strong>([% patron.cardnumber | html %])</strong>.</p>
+                                    <strong>([% patron.cardnumber | html %])</strong>,
+                                    à la banque [% reserve.desk.desk_name %].</p>
                                     <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
                                         <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
                                         <input type="hidden" name="itemnumber" value="[% item.itemnumber | html %]">
@@ -161,22 +165,22 @@
                                     
                             [% END %]
                             [% IF op == "cancel" %]
-                                <h2>Il reste une étape pour marquer ce document comme perdu et notifier le lecteur</h2>
-                                <p>Vous voulez annuler marquer perdu [% item.biblio.title | html %],
+                                <h2>Il reste une étape pour déclarer ce document comme manquant et notifier le lecteur</h2>
+                                <p>Vous voulez déclarer manquant [% item.biblio.title | html %],
                                     [% IF item.biblio.author %][% item.biblio.author |html %], [% END %]
                                     [% item.itemcallnumber | html %],
                                     et le notifier à  [% patron.firstname | html %]
                                     [% patron.surname | html %]
                                     <strong>([% patron.cardnumber | html %])</strong>.</p>
                                 [% IF Koha.Preference('CanMarkHoldsToPullAsLost') != 'do_not_allow' %]
-                                    <form name="cancelReserve" action="/cgi-bin/koha/circ/pendingreserves.pl" method="post">
+                                    <form id="markaslost" name="markaslost" action="/cgi-bin/koha/circ/pendingreserves.pl?returnto=receive.pl" method="post">
                                         <input type="hidden" name="reserve_id" value="[% reserve.reserve_id %]" />
                                         [% IF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow' %]
                                             <input type="hidden" name="op" value="mark_as_lost" />
                                             <input type="submit" value="Mark item as lost" />
                                         [% ELSIF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow_and_notify' %]
                                             <input type="hidden" name="op" value="mark_as_lost_and_notify" />
-                                            <input type="submit" value="Déclarer le document perdu et notifier le lecteur" />
+                                            <input id="submitmarkaslost" type="submit" value="Déclarer le document manquant et notifier le lecteur" />
                                         [% END %]
                                     </form>
                                 [% END %]
@@ -310,14 +314,21 @@
 
     [% INCLUDE 'intranet-bottom.inc' %]
      [% IF op == "confirm" %]
-    <script>
-     $(document).ready(function() {
-         $('#circ-needsconfirmation-modal').on('shown.bs.modal', function () {
-             $('#barcode').blur();
-             $('#missing_barcode').focus();
-         });
-         $('#circ-needsconfirmation-modal').modal('show');
-           //$('#missing_barcode').focus();
-     });
-    </script>
+         <script>
+          $(document).ready(function() {
+              $('#circ-needsconfirmation-modal').on('shown.bs.modal', function () {
+                  $('#barcode').blur();
+                  $('#missing_barcode').focus();
+              });
+              $('#circ-needsconfirmation-modal').modal('show');
+              //$('#missing_barcode').focus();
+          });
+         </script>
+     [% END %]
+     [% IF op == "cancel" %]
+         <script>
+          $(document).ready(function() {
+              $('#submitmarkaslost').trigger('click');
+          });
+         </script>
      [% END %]
