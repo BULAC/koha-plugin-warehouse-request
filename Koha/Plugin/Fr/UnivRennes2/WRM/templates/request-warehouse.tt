@@ -219,7 +219,7 @@
                                 </p>
                             </form>
                         [% ELSE %]
-                            <div class="dialog message">Aucun exmeplaire n'est disponible pour une demande magasin</div>
+                            <div class="dialog message">Aucun exemplaire n'est disponible pour une demande magasin</div>
                         [% END %]
                     [% END %]
                     [% IF requests && !patron %]

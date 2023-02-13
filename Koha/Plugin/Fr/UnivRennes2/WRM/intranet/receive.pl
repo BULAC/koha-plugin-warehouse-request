@@ -13,6 +13,7 @@ use C4::Reserves qw(AddReserve CanItemBeReserved ModReserveAffect);
 use DateTime::Duration;
 use Koha::DateUtils qw(output_pref);
 use Koha::Patrons;
+use utf8;
 #BEGIN {
 #    use Cwd qw(abs_path);
 #    use File::Basename qw( dirname fileparse );
@@ -92,14 +93,28 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                                                   'status' => 'PROCESSING',
                                                   'itemnumber' => $item->itemnumber,
                                                  });
-        my $patron = Koha::Patrons->find($wr->borrowernumber);
-        $template->param(
-                         item   => $item,
-                         patron => $patron,
-                         wrid   => $wr->id,
-                         desk   => $desk,
-                         op     => "confirm",
-                        );
+        if ($wr->status eq 'PROCESSING') {
+            my $patron = Koha::Patrons->find($wr->borrowernumber);
+            $template->param(
+                             item   => $item,
+                             patron => $patron,
+                             wrid   => $wr->id,
+                             desk   => $desk,
+                             op     => "confirm",
+                            );
+        }
+        elsif ($wr->status eq 'COMPLETED') {
+            $error = "$error, request already completed";
+        }
+        elsif  ($wr->status eq 'CANCELED') {
+            $error = "$error, request canceled";
+        }
+        elsif  ($wr->status eq 'PENDING') {
+            $error = "$error, request pending";
+        }
+        else {
+            $error = "$error, request " . $wr->id . " has status " . $wr->status;
+        }
     };
     if ($@) {
         $error = "$error, $@";
@@ -109,48 +124,57 @@ if ($barcode_type eq "item" and $op eq "confirm") {
     my $wrid = $1;
     local $@;
     eval {
-        my $wr   = Koha::WarehouseRequests->find($wrid);
-        my $item = Koha::Items->find( $wr->itemnumber );
-        my $patron = Koha::Patrons->find( $wr->borrowernumber );
-        $template->param(
-                         item   => $item,
-                         patron => $patron,
-                         wrid   => $wr->id,
-                         desk   => $desk,
-                         op     => "confirm",
-                        );
+        my $wr = Koha::WarehouseRequests->find( $wrid ) ;
+        if ($wr->status eq 'PROCESSING') {
+            my $item = Koha::Items->find( $wr->itemnumber );
+            my $patron = Koha::Patrons->find( $wr->borrowernumber );
+            $template->param(
+                             item   => $item,
+                             patron => $patron,
+                             wrid   => $wr->id,
+                             desk   => $desk,
+                             op     => "confirm",
+                            );
+        }
+        else {
+            $error = "$error, requête " . $wr->id . " ne peut être traîtée, statut : " . $wr->status;
+        }
     };
     if ($@) {
         $error = "$error, $@";
     }
 } elsif (($barcode_type eq "item" or $missing_barcode) and ($op eq "confirmed" or $op eq "cancel") and $wrid >= 0) {
-    my $wr   = Koha::WarehouseRequests->find($wrid);
-    my $item = Koha::Items->find( $wr->itemnumber );
-    my $patron = Koha::Patrons->find($wr->borrowernumber);
-    $item->barcode($missing_barcode)->store()
-      if ($missing_barcode and ! $item->barcode);
-    $wr = $wr->complete();
-    my $resid = AddReserve({
-                            branchcode       => $wr->borrower->branchcode,
-                            borrowernumber   => $wr->borrower->borrowernumber,
-                            biblionumber     => $wr->item->biblionumber,
-                            priority         => 0,
-                            reservation_date => output_pref({ dt => DateTime->now, dateformat => 'iso' , dateonly => 1 }),
-                            resevenotes      => 'FROM_STACKS',
-                            itemnumber       => $wr->item->itemnumber(),
-                            found            => 'W',
-                            itemtype         => $wr->item->itype(),
-                            desk_id          => $desk_id,
-                           });
-    #        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
-    my $res = Koha::Holds->find($resid);
+    my $wr   = Koha::WarehouseRequests->find( $wrid );
+    if ($wr->status eq 'PROCESSING') {
+        my $item = Koha::Items->find( $wr->itemnumber );
+        my $patron = Koha::Patrons->find($wr->borrowernumber);
+        $item->barcode($missing_barcode)->store()
+          if ($missing_barcode and ! $item->barcode);
+        $wr = $wr->complete();
+        my $resid = AddReserve({
+                                branchcode       => $wr->borrower->branchcode,
+                                borrowernumber   => $wr->borrower->borrowernumber,
+                                biblionumber     => $wr->item->biblionumber,
+                                priority         => 0,
+                                reservation_date => output_pref({ dt => DateTime->now, dateformat => 'iso' , dateonly => 1 }),
+                                resevenotes      => 'FROM_STACKS',
+                                itemnumber       => $wr->item->itemnumber(),
+                                found            => 'W',
+                                itemtype         => $wr->item->itype(),
+                               });
+        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+        my $res = Koha::Holds->find($resid);
 
-    $template->param(
-                     item    => $item,
-                     reserve => $res,
-                     op      => $op,
-                     patron  => $patron,
-                    )
+        $template->param(
+                         item    => $item,
+                         reserve => $res,
+                         op      => $op,
+                         patron  => $patron,
+                        )
+    }
+    else {
+        $error = "$error, requête " . $wr->id . " ne peut être traîtée, statut : " . $wr->status;
+    }
 } elsif ($op eq "cancel" and $wrid >= 0) {
     my $wr = Koha::WarehouseRequests->find( $wrid );
     my $item;
@@ -167,9 +191,8 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                             itemnumber       => $wr->item->itemnumber(),
                             found            => 'W',
                             itemtype          => $wr->item->itype(),
-                            desk_id             => $desk_id,
                            });
-    #    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
     my $res = Koha::Holds->find($resid);
 
     $template->param(

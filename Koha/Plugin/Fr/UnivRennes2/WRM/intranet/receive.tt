@@ -29,7 +29,7 @@
 [% END %]
 
 [% INCLUDE 'doc-head-open.inc' %]
-<title>Réception ou disparition &rsaquo; Circulation &rsaquo; Koha</title>
+<title>Réception de document ou déclaration de manquant &rsaquo; Circulation &rsaquo; Koha</title>
 [% INCLUDE 'doc-head-close.inc' %]
 </head>
 
@@ -42,7 +42,7 @@
     <nav id="breadcrumbs" aria-label="Breadcrumb" class="breadcrumb">
         <ol>
             <li>
-                <a href="/cgi-bin/koha/mainpage.pl">Home</a>
+                <a href="/cgi-bin/koha/mainpage.pl">Accueil</a>
             </li>
             <li>
                 <a href="/cgi-bin/koha/circ/circulation-home.pl">Circulation</a>
@@ -134,7 +134,7 @@
                                     <p>Si vous devez marquer que le document est manquant et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
                                     <div class="row">
                                         <div class="col-sm-6">
-                                            <div class="hint">Entrez le code barre:</div>
+                                            <div class="hint">Entrer le code barre :</div>
                                             <div class="form-control-group">
                                                 <input name="barcode" id="barcode" size="14" class="barcode focus" />
                                                 <input type="hidden" name="op" id="op" value="confirm"/>
@@ -143,7 +143,9 @@
                                 </fieldset> <!-- /#circ_returns_checkin -->
                             </form> <!-- /#checkin-form -->
                             [% IF error %]
-                                <h1>ERREUR !!! [% error %]</h1>
+                                <h1>Code barre non reconnu</h1>
+                                <p>Ce code barre n'est possiblement pas enregistré dans la notice du document. Pour l'enregistrer, scannez d'abord le code barre du bordereau puis le code barre du document.</p>
+                                <p>Message d’erreur à destination des informaticiens : [% error  %].</p>
                             [% END %]
                             [% IF op == "confirmed" %]
                                 <h2>Mise de côté réussie</h2>
