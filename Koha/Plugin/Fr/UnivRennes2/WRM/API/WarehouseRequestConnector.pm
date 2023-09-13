@@ -601,7 +601,7 @@ sub count {
     my $arguments;
     if ($biblionumber) {
         $arguments->{biblionumber} = $biblionumber;
-        $arguments->{status} = { 'NOT IN' => "('COMPLETED','CANCELED')" };
+        $arguments->{status} = { -not_in => ['COMPLETED','CANCELED'] };
     } else {
         $arguments->{status} = 'PROCESSING'
     }
