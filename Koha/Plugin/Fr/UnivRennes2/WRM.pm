@@ -15,7 +15,6 @@ use Module::Metadata;
 
 use C4::Auth;
 use Date::Calc qw(Date_to_Days);
-use C4::Utils::DataTables::Members;
 use C4::Output;
 use C4::Context;
 use C4::Koha qw(GetAuthorisedValues);
@@ -212,24 +211,24 @@ sub creation {
     }
 
     if ( !$patron && $patron_cardnumber ) {
-        my $results = C4::Utils::DataTables::Members::search(
-            {
-                searchmember => $patron_cardnumber,
-                dt_params    => { iDisplayLength => -1 },
-            }
-        );
+        # C4::Utils::DataTables::Members has been removed I'm not sure the
+        #  code below is useful, let's comment it for now (2023-09-13).
+        
+        #        my $results = C4::Utils::DataTables::Members::search( {
+        #        searchmember => $patron_cardnumber, dt_params => {
+        #        iDisplayLength => -1 }, } );
+        
+        #        my $patrons = $results->{patrons};
 
-        my $patrons = $results->{patrons};
-
-        if ( scalar @$patrons == 1 ) {
-            $patron = Koha::Patrons->find( $patrons->[0]->{borrowernumber} );
-        }
-        elsif (@$patrons) {
-            $template->param( patrons => $patrons );
-        }
-        else {
-            $template->param( no_patrons_found => $patron_cardnumber );
-        }
+        #        if ( scalar @$patrons == 1 ) {
+        #            $patron = Koha::Patrons->find( $patrons->[0]->{borrowernumber} );
+        #        }
+        #        elsif (@$patrons) {
+        #            $template->param( patrons => $patrons );
+        #        }
+        #        else {
+        $template->param( no_patrons_found => $patron_cardnumber );
+        #        }
     }
 
     if ($patron) {
