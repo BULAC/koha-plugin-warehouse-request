@@ -8,7 +8,7 @@ KPZFILENAME=$PROJECTNAME-v$VERSION.kpz;
 FILEPATHFULLDIST=dist/$FILEPATH/$FILENAME;
 
 mkdir dist ;
-cp -r Koha dist/. ;
+rsync -av --exclude '*~' --exclude '#*' Koha dist/. ;
 perl -pi -e "s/{VERSION}/$VERSION/g" $FILEPATHFULLDIST ;
 perl -pi -e "s/{UPDATE_DATE}/$TODAY/g" $FILEPATHFULLDIST ;
 cd dist ;
