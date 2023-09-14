@@ -8,6 +8,7 @@
 [% SET footerjs = 1 %]
 [% SET biblionumber = biblio.biblionumber %]
 [% INCLUDE 'doc-head-open.inc' %]
+[% PROCESS "patron-search.inc" %]
 <title>Koha &rsaquo; Circulation &rsaquo; Demande magasin</title>
 [% INCLUDE 'doc-head-close.inc' %]
 </head>
@@ -33,8 +34,8 @@
     <div class="row">
         <div class="col-sm-10 col-sm-push-2">
             <main>
-	                
-	                
+
+
                     <h1>Demande magasin depuis <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% biblio.id %]">[% biblio.title | html %]</a></h1>
                     [% IF no_patrons_found %]
                         <div class="dialog alert">
@@ -77,15 +78,47 @@
                         </form>
                     [% ELSIF !patron %]
                         <form id="warehouse_requests_patronsearch" method="post">
+
                             <fieldset class="brief">
-                                <label for="patron">Adhérent&nbsp;: </label>
-                                <div class="hint">Entrer le n° de carte d'adhérent ou une partie du nom&nbsp;:</div>
-                                <input type="text" size="40" id="patron" class="focus" name="patron_cardnumber" />
-                                <input type="submit" value="Rechercher" />
-                                <input type="hidden" name="biblionumber" value="[% biblio.id %]" />
-                                <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
-                                <input type="hidden" name="method" value="tool" />
-                                <input type="hidden" name="op" value="creation" />
+                                                    [% WRAPPER tabs id= "circ_holds_select" %]
+                        [% WRAPPER tabs_nav %]
+                            [% WRAPPER tab_item tabname= "holds_patronsearch_pane" bt_active= 1 %] <span>Patrons</span> [% END %]
+                            [% IF clubcount %]
+                                [% WRAPPER tab_item tabname= "holds_clubsearch_pane" %] <span>Clubs</span> [% END %]
+                            [% END %]
+                        [% END # /WRAPPER tabs_nav %]
+
+                        [% WRAPPER tab_panels %]
+                            [% WRAPPER tab_panel tabname="holds_patronsearch_pane" bt_active= 1 %]
+                                [% PROCESS patron_search_filters_simple %]
+
+                                [% PROCESS patron_search_table table_id => 'table_borrowers', open_on_row_click => 1 %]
+                            [% END # /tab_panel# %]
+                            [% IF clubcount %]
+                                [% WRAPPER tab_panel tabname="holds_clubsearch_pane" %]
+                                    <form id="holds_clubsearch" action="request.pl" method="post">
+                                        <div class="hint">Enter club ID or partial name:</div>
+                                        <input type="text" size="40" id="club" class="focus" name="findclub" autocomplete="off" />
+                                        <input type="submit" class="btn btn-primary" value="Search" />
+                                        [% FOREACH biblionumber IN biblionumbers %]
+                                        <input type="hidden" name="biblionumber" value="[% biblionumber | html %]"/>
+                                        [% END %]
+                                    </form> <!-- /#holds_patronsearch -->
+                                    [% IF clubs %]
+                                        [% INCLUDE 'clubs-table.inc' destination = "holds" %]
+                                    [% END %]
+                                [% END # /tab_panel# %]
+                            [% END # /IF clubcount %]
+                        [% END # /WRAPPER tab_panels %]
+                    [% END # /WRAPPER tabs %]
+                    <!-- <label for="patron">Adhérent&nbsp;: </label>
+                         <div class="hint">Entrer le n° de carte d'adhérent ou une partie du nom&nbsp;:</div>
+                         <input type="text" size="40" id="patron" class="focus" name="patron_cardnumber" />
+                         <input type="submit" value="Rechercher" />
+                         <input type="hidden" name="biblionumber" value="[% biblio.id %]" />
+                         <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                         <input type="hidden" name="method" value="tool" />
+                         <input type="hidden" name="op" value="creation" /> -->
                             </fieldset>
                         </form>
                     [% ELSE %]
@@ -101,7 +134,7 @@
                                 </ul>
                             </div>
                         [% END %]
-                        
+
                         [% IF items.size %]
                             <form id="place-warehouse-request" method="post" action="">
                                 <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
@@ -243,7 +276,7 @@
                                     <tr>
                                         <td>
                                             <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% wr.borrowernumber %]">[% wr.borrower.firstname %] [% wr.borrower.surname %]</a>
-                                            [% IF wr.patron_name %]<br />[% wr.patron_name %][% END %]  
+                                            [% IF wr.patron_name %]<br />[% wr.patron_name %][% END %]
                                         </td>
                                         <td>
                                             [% IF wr.item %]
@@ -298,14 +331,14 @@
             </aside>
         </div> <!-- /.col-sm-2.col-sm-pull-10 -->
      </div> <!-- /.row -->
-    
-[% MACRO jsinclude BLOCK %]    
+
+[% MACRO jsinclude BLOCK %]
     [% INCLUDE 'datatables.inc' %]
 <script type="text/javascript">
     $('#current-requests-table').ready(function() {
         $(".hide").hide();
     });
-    
+
     $(document).ready(function() {
         if ( $("#patron").length > 0 ) {
             $( "#patron" ).autocomplete({
@@ -327,7 +360,7 @@
                 .appendTo( ul );
             };
         }
-        
+
         $('#circ_request-warehouse .complete-wr').click(function() {
             var id = $(this).attr('data-id');$.ajax({
                 type: "POST",
@@ -345,7 +378,7 @@
                 }
             });
         });
-        
+
         $('#circ_request-warehouse .cancel-wr').click(function() {
             var notes = prompt('Raison de l\'annulation :');
             if (notes != '') {
@@ -368,13 +401,13 @@
                 });
             }
         });
-        
+
         $('#current-warehouse-requests-table').dataTable($.extend(true, {}, dataTablesDefaults, {
             "sDom": 't',
             "aaSorting": [[ 2, "desc" ]],
             "bPaginate": false
         }));
-        
+
         $('#place-warehouse-request').submit(function(e) {
             if ($('#volume').length > 0 && $('#issue').length > 0 && $('#date').length > 0) {
                 var error = '';
@@ -392,6 +425,6 @@
         });
     });
 </script>
-[% END %]    
-    
+[% END %]
+
     [% INCLUDE 'intranet-bottom.inc' %]
