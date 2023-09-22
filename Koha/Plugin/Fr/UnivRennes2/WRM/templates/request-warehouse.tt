@@ -77,50 +77,13 @@
                             </fieldset>
                         </form>
                     [% ELSIF !patron %]
-                        <form id="warehouse_requests_patronsearch" method="post">
-
-                            <fieldset class="brief">
-                                                    [% WRAPPER tabs id= "circ_holds_select" %]
-                        [% WRAPPER tabs_nav %]
-                            [% WRAPPER tab_item tabname= "holds_patronsearch_pane" bt_active= 1 %] <span>Patrons</span> [% END %]
-                            [% IF clubcount %]
-                                [% WRAPPER tab_item tabname= "holds_clubsearch_pane" %] <span>Clubs</span> [% END %]
-                            [% END %]
-                        [% END # /WRAPPER tabs_nav %]
-
-                        [% WRAPPER tab_panels %]
-                            [% WRAPPER tab_panel tabname="holds_patronsearch_pane" bt_active= 1 %]
-                                [% PROCESS patron_search_filters_simple %]
-
-                                [% PROCESS patron_search_table table_id => 'table_borrowers', open_on_row_click => 1 %]
-                            [% END # /tab_panel# %]
-                            [% IF clubcount %]
-                                [% WRAPPER tab_panel tabname="holds_clubsearch_pane" %]
-                                    <form id="holds_clubsearch" action="request.pl" method="post">
-                                        <div class="hint">Enter club ID or partial name:</div>
-                                        <input type="text" size="40" id="club" class="focus" name="findclub" autocomplete="off" />
-                                        <input type="submit" class="btn btn-primary" value="Search" />
-                                        [% FOREACH biblionumber IN biblionumbers %]
-                                        <input type="hidden" name="biblionumber" value="[% biblionumber | html %]"/>
-                                        [% END %]
-                                    </form> <!-- /#holds_patronsearch -->
-                                    [% IF clubs %]
-                                        [% INCLUDE 'clubs-table.inc' destination = "holds" %]
-                                    [% END %]
-                                [% END # /tab_panel# %]
-                            [% END # /IF clubcount %]
-                        [% END # /WRAPPER tab_panels %]
-                    [% END # /WRAPPER tabs %]
-                    <!-- <label for="patron">Adhérent&nbsp;: </label>
-                         <div class="hint">Entrer le n° de carte d'adhérent ou une partie du nom&nbsp;:</div>
-                         <input type="text" size="40" id="patron" class="focus" name="patron_cardnumber" />
-                         <input type="submit" value="Rechercher" />
-                         <input type="hidden" name="biblionumber" value="[% biblio.id %]" />
-                         <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
-                         <input type="hidden" name="method" value="tool" />
-                         <input type="hidden" name="op" value="creation" /> -->
-                            </fieldset>
-                        </form>
+                        <div class="form-group">
+                                <label class="sr-only" for="input-patron-cardnumber">Cardnumber</label>
+                                <div class="input-group">
+                                    <div class="input-group-addon">Search a patron</div>
+                                    <input autocomplete="off" id="find-patron" class="form-control" type="text" style="width:25%" class="noEnterSubmit" placeholder="Enter patron cardnumber or name"/>
+                                 </div>
+                            </div>
                     [% ELSE %]
                         [% IF ( expiry || patron.is_debarred ) %]
                             <div class="dialog message">
@@ -330,101 +293,89 @@
                 [% INCLUDE 'biblio-view-menu.inc' %]
             </aside>
         </div> <!-- /.col-sm-2.col-sm-pull-10 -->
-     </div> <!-- /.row -->
+    </div> <!-- /.row -->
 
-[% MACRO jsinclude BLOCK %]
+    [% MACRO jsinclude BLOCK %]
     [% INCLUDE 'datatables.inc' %]
-<script type="text/javascript">
-    $('#current-requests-table').ready(function() {
-        $(".hide").hide();
-    });
+    [% INCLUDE 'js-patron-format.inc' %]
+    <script type="text/javascript">
+     $('#current-requests-table').ready(function() {
+         $(".hide").hide();
+     });
 
-    $(document).ready(function() {
-        if ( $("#patron").length > 0 ) {
-            $( "#patron" ).autocomplete({
-                source: "/cgi-bin/koha/circ/ysearch.pl",
-                minLength: 3,
-                select: function( event, ui ) {
-                    $( "#patron" ).val( ui.item.cardnumber );
-                    $( "#holds_patronsearch" ).submit();
-                    return false;
-                }
-            })
-            .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                return $( "<li></li>" )
-                .data( "ui-autocomplete-item", item )
-                .append( "<a>" + item.surname + ", " + item.firstname +
-                    " (" + item.cardnumber + ") <small>" + item.address +
-                    " " + item.city + " " + item.zipcode + " " +
-                    item.country + "</small></a>" )
-                .appendTo( ul );
-            };
-        }
+     $(document).ready(function() {
+         if ( $("#find-patron").length ) {
+             patron_autocomplete($("#find-patron"), { 'on-select-callback': function( event, ui ) {
+                 window.location.href = "/cgi-bin/koha/circ/curbside_pickups.pl?op=find-patron&borrowernumber=" + ui.item.patron_id;
+                 return false;
+             }
+             });
+         }
 
-        $('#circ_request-warehouse .complete-wr').click(function() {
-            var id = $(this).attr('data-id');$.ajax({
-                type: "POST",
-                url: "/api/v1/contrib/wrm/update_status",
-                data: {
-                    id: id,
-                    action: 'complete',
-                },
-                success: function() {
-                    alert('La demande a été terminée avec succès');
-                    location.reload(true);
-                },
-                error: function( data ) {
-                    alert( data.error );
-                }
-            });
-        });
+     $('#circ_request-warehouse .complete-wr').click(function() {
+         var id = $(this).attr('data-id');$.ajax({
+             type: "POST",
+             url: "/api/v1/contrib/wrm/update_status",
+             data: {
+                 id: id,
+                 action: 'complete',
+             },
+             success: function() {
+                 alert('La demande a été terminée avec succès');
+                 location.reload(true);
+             },
+             error: function( data ) {
+                 alert( data.error );
+             }
+         });
+     });
 
-        $('#circ_request-warehouse .cancel-wr').click(function() {
-            var notes = prompt('Raison de l\'annulation :');
-            if (notes != '') {
-                var id = $(this).attr('data-id');
-                $.ajax({
-                    type: "POST",
-                    url: "/api/v1/contrib/wrm/update_status",
-                    data: {
-                        id: id,
-                        action: 'cancel',
-                        notes: notes,
-                    },
-                    success: function() {
-                        alert('La demande a été annulée avec succès');
-                        location.reload(true);
-                    },
-                    error: function( data ) {
-                        alert( data.error );
-                    }
-                });
-            }
-        });
+         $('#circ_request-warehouse .cancel-wr').click(function() {
+             var notes = prompt('Raison de l\'annulation :');
+             if (notes != '') {
+                 var id = $(this).attr('data-id');
+                 $.ajax({
+                     type: "POST",
+                     url: "/api/v1/contrib/wrm/update_status",
+                     data: {
+                         id: id,
+                         action: 'cancel',
+                         notes: notes,
+                     },
+                     success: function() {
+                         alert('La demande a été annulée avec succès');
+                         location.reload(true);
+                     },
+                     error: function( data ) {
+                         alert( data.error );
+                     }
+                 });
+             }
+         });
 
-        $('#current-warehouse-requests-table').dataTable($.extend(true, {}, dataTablesDefaults, {
-            "sDom": 't',
-            "aaSorting": [[ 2, "desc" ]],
-            "bPaginate": false
-        }));
+         $('#current-warehouse-requests-table').dataTable($.extend(true, {}, dataTablesDefaults, {
+             "sDom": 't',
+             "aaSorting": [[ 2, "desc" ]],
+             "bPaginate": false
+         }));
 
-        $('#place-warehouse-request').submit(function(e) {
-            if ($('#volume').length > 0 && $('#issue').length > 0 && $('#date').length > 0) {
-                var error = '';
-                if ($('#date').val() == '') {
-                    error += "Veuillez préciser l'année.";
-                }
-                if ($('#volume').val() == '' && $('#issue').val() == '') {
-                    error += "\nVeuillez préciser le volume et/ou le numéro.";
-                }
-                if (error != '') {
-                    alert(error);
-                    e.preventDefault();
-                }
-            }
-        });
-    });
-</script>
+         $('#place-warehouse-request').submit(function(e) {
+             if ($('#volume').length > 0 && $('#issue').length > 0 && $('#date').length > 0) {
+                 var error = '';
+                 if ($('#date').val() == '') {
+                     error += "Veuillez préciser l'année.";
+                 }
+                 if ($('#volume').val() == '' && $('#issue').val() == '') {
+                     error += "\nVeuillez préciser le volume et/ou le numéro.";
+                 }
+                 if (error != '') {
+                     alert(error);
+                     e.preventDefault();
+                 }
+             }
+         });
+     });
+    </script>
 [% END %]
 
     [% INCLUDE 'intranet-bottom.inc' %]
