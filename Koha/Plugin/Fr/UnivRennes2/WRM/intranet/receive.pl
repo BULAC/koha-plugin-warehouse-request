@@ -21,7 +21,8 @@ use Koha::Patrons;
 #}
 use lib qw(/var/lib/koha/form/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
            /var/lib/koha/prod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
-           /var/lib/koha/preprod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib);
+           /var/lib/koha/preprod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
+           /var/lib/koha/dev/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib);
 use Koha::WarehouseRequest;
 use Koha::WarehouseRequests;
 use Koha::WarehouseRequestStatus;
