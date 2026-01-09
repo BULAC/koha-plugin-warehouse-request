@@ -1,0 +1,189 @@
+    [% USE KohaDates %]
+    [% USE raw %]
+    [% SET footerjs = 1 %]
+    [% INCLUDE 'doc-head-open.inc' %]
+    <title>Koha: Warehouse Request Management Plugin: Configuration</title>
+    [% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+    [% INCLUDE 'header.inc' %]
+    [% INCLUDE 'cat-search.inc' %]
+    
+    <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl"  data-i18n-key="BREADCRUMBS_HOME"></a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; <span data-i18n-key="PLUGIN_NAME"></span> - <span data-i18n-key="BREADCRUMBS_CONF"></span></div>
+    
+</div>
+    <div class="main container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
+                [% IF config_success %]
+                    <div class="panel panel-success">
+                        <div class="panel-heading">
+                            <h3 class="panel-title" data-i18n-key="SUCCESS_ALERT"></h3>
+                        </div>
+                        <div class="panel-body" data-i18n-key="[% config_success %]"></div>
+                    </div>
+                [% END %]
+                [% IF config_error %]
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">
+                            <h3 class="panel-title" data-i18n-key="ERROR_ALERT"></h3>
+                        </div>
+                        <div class="panel-body" data-i18n-key="[% config_error %]"></div>
+                    </div>
+                [% END %]                   
+                <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
+                <form method="post">
+                    <input type="hidden" name="class" value="[% CLASS %]"/>
+                    <input type="hidden" name="method" value="[% METHOD %]"/>
+                    <div class="rows">
+                    <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+                        <h3 data-i18n-key="BREADCRUMBS_CONF"></h3>
+                        <ol>
+                            <li>
+                                <label for="days_to_keep"><span class="label" data-i18n-key="REQUEST_MAX_PICKUP_DELAY"></span>: </label>
+                                <input type="number" id="days_to_keep" name="days_to_keep" value="[% days_to_keep %]" />
+                                <span class="hint" data-i18n-key="DAYS"></span>
+                            </li>
+                            <li>
+                                <label for="days_since_archived"><span class="label" data-i18n-key="ARCHIVE_AFTER"></span>: </label>
+                                <input type="number" id="days_since_archived" name="days_since_archived" value="[% days_since_archived %]" />
+                                <span class="hint" data-i18n-key="DAYS"></span>
+                            </li>
+                            <li>
+                                <label for="warehouse_branches"><span class="label" data-i18n-key="ENABLED_BRANCH"></span>: </label>
+                                <select id="warehouse_branches" name="warehouse_branches" multiple>
+                                    [% FOREACH b IN branches %]
+                                     <option value="[% b.branchcode %]"[% IF warehouse_branches.grep('^' _ b.branchcode _ '$').size %] selected="selected"[% END %]>[% b.branchname | html %]</option>
+                                    [% END %]
+                                </select>
+                            </li>
+                            <li>
+                                <label for="warehouse_desks"><span class="label" data-i18n-key="ENABLED_DESKS"></span>: </label>
+                                    <textarea id="warehouse_desks" name="warehouse_desks" rows="20" cols="40">[% warehouse_desks %]</textarea>
+                            </li>
+                            <li>
+                                <label for="warehouse_locations"><span class="label" data-i18n-key="ENABLED_LOC"></span>: </label>
+                                <select id="warehouse_locations" name="warehouse_locations" multiple>
+                                    [% FOREACH l IN locations %]
+                                    <option value="[% l.code %]"[% IF warehouse_locations.grep('^' _ l.code _ '$').size %] selected="selected"[% END %]>[% l.description %]</option>
+                                    [% END %]
+                                </select>
+                            </li>
+                            <li>
+                                <label for="warehouse_itemtypes"><span class="label" data-i18n-key="ENABLED_ITEMTYPES"></span>: </label>
+                                    <select id="warehouse_itemtypes" name="warehouse_itemtypes" multiple>
+                                    [% FOREACH itemtype IN itemtypes %]
+										<option value="[% itemtype.itemtype | html %]"[% IF warehouse_itemtypes.grep('^' _ itemtype.itemtype _ '$').size %] selected="selected"[% END %]>[% itemtype.translated_description | html %] </option>
+
+                                    [% END %]
+                                </select>
+                            </li>
+                            <li>
+                                <label for="warehouse_notforloan"><span class="label" data-i18n-key="ENABLED_ITEMSTATUS"></span>: </label>
+                                <select id="warehouse_notforloan" name="warehouse_notforloan" multiple>
+                                    [% FOREACH n IN notforloan %]
+                                    <option value="[% n.code %]"[% IF warehouse_notforloan.grep('^' _ n.code _ '$').size %] selected="selected"[% END %]>[% n.description %]</option>
+                                    [% END %]
+                                </select>
+                            </li>
+                            <li>
+                                <label for="warehouse_opac_enabled"><span class="label" data-i18n-key="PATRON_REQUEST"></span>: </label>
+                                [% IF warehouse_opac_enabled %]
+                                    <input name="warehouse_opac_enabled" id="warehouse_opac_enabled" value="1" type="checkbox" checked>
+                                [% ELSE %]
+                                    <input name="warehouse_opac_enabled" id="warehouse_opac_enabled" value="1" type="checkbox">
+                                [% END %]
+                                <span class="hint"> Feature not enabled for now</span>
+
+                            </li>
+                                <label for="warehouse_waiting_enabled"><span class="label" data-i18n-key="ENABLED_WAITING"></span>: </label>
+                                [% IF warehouse_waiting_enabled %]
+                                    <input name="warehouse_waiting_enabled" id="warehouse_waiting_enabled" value="1" type="checkbox" checked>
+                                [% ELSE %]
+                                    <input name="warehouse_waiting_enabled" id="warehouse_waiting_enabled" value="1" type="checkbox">
+                                [% END %]
+                            <li>
+                                <label for="warehouse_message_disabled"><span class="label" data-i18n-key="ALERT_IF_DISABLED"></span>: </label>
+                                 <textarea name="warehouse_message_disabled" id="warehouse_message_disabled">[% warehouse_message_disabled %]</textarea>
+                                  <span class="hint"> Feature not enabled for now</span>
+
+                            </li>
+                        </ol>
+
+                    </div>
+                    
+                    <div class="rows">
+                    <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+                        <h3  data-i18n-key="RABBITMQ_CONF"></h3>
+                        <ol>
+                            <li>
+                                <label for="rmq_server"><span class="label" data-i18n-key="SERVER_LABEL"></span>: </label>
+                                <input type="text" id="rmq_server" name="rmq_server" value="[% rmq_server %]" />
+                            </li>
+                            <li>
+                                <label for="rmq_port"><span class="label" data-i18n-key="PORT_LABEL"></span>: </label>
+                                <input type="text" id="rmq_port" name="rmq_port" value="[% rmq_port %]" />
+                            </li>
+                            <li>
+                                <label for="rmq_vhost"><span class="label" data-i18n-key="VHOST_LABEL"></span>: </label>
+                                <input type="text" id="rmq_vhost" name="rmq_vhost" value="[% rmq_vhost %]" />
+                            </li>
+                            <li>
+                                <label for="rmq_exchange"><span class="label" data-i18n-key="EXCHANGE_LABEL"></span>: </label>
+                                <input type="text" id="rmq_exchange" name="rmq_exchange" value="[% rmq_exchange %]" />
+                            </li>
+                            <li>
+                                <label for="rmq_user"><span class="label" data-i18n-key="USER_LABEL"></span>: </label>
+                                <input type="text" id="rmq_user" name="rmq_user" value="[% rmq_user %]" />
+                            </li>
+                            <li>
+                                <label for="rmq_pwd"><span class="label" data-i18n-key="PWD_LABEL"></span>: </label>
+                                <input type="password" id="rmq_pwd" name="rmq_pwd" />
+                            </li>
+                            <li>
+                                <label for="rmq_pwd_conf"><span class="label" data-i18n-key="PWD_LABEL_CONFIRM"></span>: </label>
+                                <input type="password" id="rmq_pwd_conf" name="rmq_pwd_conf" />
+                            </li>
+                        </ol>
+                    </div>
+                    <input type="hidden" name="save" value="1" />
+                    <hr />
+                    <button type="submit" data-i18n-key="SAVE_BUTTON"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+[% MACRO jsinclude BLOCK %]
+
+  <script type="text/javascript">
+
+    var tokens = {};
+    [% FOREACH t IN tokens %]
+        tokens['[% t.key | html %]'] = [% t.text | $raw %];
+    [% END %]
+    
+    console.log(tokens);
+
+    $(document).ready(function() {
+      var lang = $('html').attr('lang');
+      var part = lang.split('-')[0];
+      var i18n = Object.assign({}, tokens['en'], tokens[part]||{}, tokens[lang]||{});
+      $('*[data-i18n-key]:not([data-i18n-key=""]').each(function(){
+        var $t = $(this);
+        var data = $t.data();
+        if(!i18n.hasOwnProperty(data.i18nKey)) return;
+        var text = _(i18n[data.i18nKey]);
+        if(data.i18nFormat) {
+            !Array.isArray(data.i18nFormat) && (data.i18nFormat = [data.i18nFormat]);
+            text = text.format.apply(text, data.i18nFormat);
+        }
+        $t.html(text);
+      });
+    });
+
+  </script>
+
+[% END %]
+
+    [% INCLUDE 'intranet-bottom.inc' %]
