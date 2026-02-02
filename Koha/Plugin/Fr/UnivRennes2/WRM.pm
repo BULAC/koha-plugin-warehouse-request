@@ -15,7 +15,6 @@ use Module::Metadata;
 
 use C4::Auth;
 use Date::Calc qw(Date_to_Days);
-use C4::Utils::DataTables::Members;
 use C4::Output;
 use C4::Context;
 use C4::Koha qw(GetAuthorisedValues);
@@ -212,20 +211,25 @@ sub creation {
     }
 
     if ( !$patron && $patron_cardnumber ) {
-        my $results = C4::Utils::DataTables::Members::search(
+        my $patrons_rs = Koha::Patrons->search(
             {
-                searchmember => $patron_cardnumber,
-                dt_params    => { iDisplayLength => -1 },
+                -or => [
+                    { cardnumber => $patron_cardnumber},
+                    { surname => { -like => "%$patron_cardnumber" } },
+                    { firstname => { -like => "%$patron_cardnumber" } },
+                    { userid => $patron_cardnumber },
+                ]
             }
         );
 
-        my $patrons = $results->{patrons};
+        my @patrons = $patrons_rs->as_list;
 
-        if ( scalar @$patrons == 1 ) {
-            $patron = Koha::Patrons->find( $patrons->[0]->{borrowernumber} );
+        if ( scalar @patrons == 1 ) {
+            $patron = $patrons[0];
         }
-        elsif (@$patrons) {
-            $template->param( patrons => $patrons );
+        elsif (@patrons) {
+            my @patrons_unblessed = map { $_->unblessed } @patrons;
+            $template->param( patrons => \@patrons_unblessed );
         }
         else {
             $template->param( no_patrons_found => $patron_cardnumber );
