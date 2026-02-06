@@ -13,16 +13,31 @@ use C4::Reserves qw(AddReserve CanItemBeReserved ModReserveAffect);
 use DateTime::Duration;
 use Koha::DateUtils qw(output_pref);
 use Koha::Patrons;
-#BEGIN {
-#    use Cwd qw(abs_path);
-#    use File::Basename qw( dirname fileparse );
-#    unshift(@INC, dirname(abs_path($1)) . "/lib")#
-#
-#}
 use lib qw(/var/lib/koha/form/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
            /var/lib/koha/prod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
            /var/lib/koha/preprod/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib
            /var/lib/koha/dev/plugins/Koha/Plugin/Fr/UnivRennes2/WRM/lib);
+
+
+BEGIN {
+    use Koha::Database;
+
+    eval {
+        require Koha::Schema::Result::WarehouseRequest;
+        my $schema = Koha::Database->new->schema;
+
+        unless ($schema->source_registrations->{'WarehouseRequest'}) {
+            $schema->register_class('WarehouseRequest', 'Koha::Schema::Result::WarehouseRequest');
+            warn "Schema WarehouseRequest enregistré avec succès";
+        }
+    };
+
+    if ($@) {
+        warn "Erreur lors de l'enregistrement du schema WarehouseRequest: $@";
+    }
+
+}
+
 use Koha::WarehouseRequest;
 use Koha::WarehouseRequests;
 use Koha::WarehouseRequestStatus;
