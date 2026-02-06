@@ -38,7 +38,6 @@ BEGIN {
     $path =~ s!\.pm$!/lib!;
     unshift @INC, $path;
 
-    require Koha::WarehouseRequestSlip;
     require Koha::WarehouseRequestStatus;
     require Koha::WarehouseRequests;
     require Koha::WarehouseRequest;
