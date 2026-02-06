@@ -69,6 +69,12 @@
                                                 </li>
                                             </ul>
                                             -->
+            <div class="col-sm-2 col-sm-pull-10">
+                <aside>
+                    [% INCLUDE 'circ-nav.inc' %]
+                </aside>
+            </div> <!-- /.col-sm-2.col-sm-pull-10 -->
+            
             <div class="col-sm-10 col-sm-push-2">
                 <main>
                     <form id="checkin-form" method="post" action="/receive.pl" autocomplete="off" >
@@ -242,11 +248,6 @@
                     [% END # /IF riloop %]
                 </main>
             </div> <!-- /.col-sm-10.col-sm-push-2 -->
-            <div class="col-sm-2 col-sm-pull-10">
-                <aside>
-                    [% INCLUDE 'circ-nav.inc' %]
-                </aside>
-            </div> <!-- /.col-sm-2.col-sm-pull-10 -->
         </div> <!-- /.row -->
     </div>
 
