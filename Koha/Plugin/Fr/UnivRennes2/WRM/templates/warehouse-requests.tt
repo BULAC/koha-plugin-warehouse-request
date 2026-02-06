@@ -568,9 +568,19 @@
    
 [% MACRO jsinclude BLOCK %]
     [% INCLUDE 'datatables.inc' %]
-   <script>
-    $(document).ready(function() {
+    <script>
 
+    function initWarehouseRequests() {
+        // Vérifier si jQuery UI Tabs est disponible
+        if (typeof $.fn.tabs === 'undefined') {
+            console.log('⏳ jQuery UI pas encore chargé, on attend...');
+            setTimeout(initWarehouseRequests, 100); // Réessayer dans 100ms
+            return;
+        }
+        
+        console.log('jQuery UI chargé');    
+    
+       
     var csrf_token = $('input[name="csrf_token"]').val();
 
     
@@ -595,7 +605,7 @@
                 { "aTargets": [0, -1], "bSortable": false, "bSearchable": false },
             ],
         }));
-        
+
         if(window.location.hash) {
             var hash = window.location.hash.substring(1); 
             if($("#f-wr-"+hash+'').size() > 0){
@@ -684,8 +694,13 @@
         $("a#load-canceled-button").click(function() {
             getList($(this),'canceled');
         });
-    });
+    }
     
+    $(document).ready(function() {
+        initWarehouseRequests();
+    });
+
+
     function submitUpRequest() {
         var csrf_token = $('input[name="csrf_token"]').val();
         $('.wr-form').on('submit', function(e) { //use on if jQuery 1.7+
