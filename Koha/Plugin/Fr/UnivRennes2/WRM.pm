@@ -57,13 +57,14 @@ our $VERSION = '{VERSION}';
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
     name            => 'Request From Stacks / Communication des documents en Magasin',
-    author          => 'Sicot Julien/Joncour Gwendal',
+    author          => 'Sicot Julien/Joncour Gwendal ; Bulac, Nicolas LEGRAND, Amaury GAU',
     date_authored   => '2019-06-25',
     date_updated    => '2021-02-24',
     minimum_version => '18.110000',
     maximum_version => undef,
     version         => $VERSION,
     description     => 'Permet de gérer les demandes de document en magasin.',
+    # Fork du module de Rennes. Ce code est spécialement maintenu par la Bulac.
 };
 
 my $reason_category = 'WR_REASON';

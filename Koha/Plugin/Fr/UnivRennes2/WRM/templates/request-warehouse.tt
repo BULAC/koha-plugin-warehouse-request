@@ -43,6 +43,7 @@
                         </div>
                     [% ELSIF patrons %]
                         <form id="warehouse_request_patron_results" method="post">
+                            [% INCLUDE 'csrf-token.inc' %]
                             <fieldset>
                                 <table id="table_borrowers">
                                     <thead>
@@ -77,6 +78,7 @@
                         </form>
                     [% ELSIF !patron %]
                         <form id="warehouse_requests_patronsearch" method="post">
+                            [% INCLUDE 'csrf-token.inc' %]
                             <fieldset class="brief">
                                 <label for="patron">Adhérent&nbsp;: </label>
                                 <div class="hint">Entrer le n° de carte d'adhérent ou une partie du nom&nbsp;:</div>
@@ -104,6 +106,7 @@
                         
                         [% IF items.size %]
                             <form id="place-warehouse-request" method="post" action="">
+                                [% INCLUDE 'csrf-token.inc' %]
                                 <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                                 <input type="hidden" name="method" value="tool" />
                                 <input type="hidden" name="op" value="creation" />
@@ -307,6 +310,7 @@
     });
     
     $(document).ready(function() {
+        var csrf_token = $('input[name="csrf_token"]').val();
         if ( $("#patron").length > 0 ) {
             $( "#patron" ).autocomplete({
                 source: "/cgi-bin/koha/circ/ysearch.pl",
@@ -335,6 +339,7 @@
                 data: {
                     id: id,
                     action: 'complete',
+                    csrf_token: csrf_token,
                 },
                 success: function() {
                     alert('La demande a été terminée avec succès');
@@ -347,6 +352,7 @@
         });
         
         $('#circ_request-warehouse .cancel-wr').click(function() {
+            var csrf_token = $('input[name="csrf_token"]').val();
             var notes = prompt('Raison de l\'annulation :');
             if (notes != '') {
                 var id = $(this).attr('data-id');
@@ -357,6 +363,7 @@
                         id: id,
                         action: 'cancel',
                         notes: notes,
+                        csrf_token: csrf_token,
                     },
                     success: function() {
                         alert('La demande a été annulée avec succès');

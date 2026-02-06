@@ -58,6 +58,8 @@
             <div class="col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
             <h1>Demandes différées</h1>
             <form id="wr-branchcode-form" method="post">
+                [% INCLUDE 'csrf-token.inc' %]
+
 		       <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
 			   <input type="hidden" name="method" value="tool" />
                     <select name="branchcode" id="branchcode">
@@ -125,6 +127,7 @@
                   </div>
                   
                   <form id="f-wr-pending" name="f-wr-pending" method="post" class="wr-form" action="">
+                    [% INCLUDE 'csrf-token.inc' %]
                       <fieldset>
                           <div id="select-status-wr-pending">
                               <div id="status-wr-pending">
@@ -258,6 +261,7 @@
                   -->
                   
                   <form id="f-wr-processing" name="f-wr-processing" class="wr-form" method="post" action="">
+                    [% INCLUDE 'csrf-token.inc' %]
                      <input type="hidden" name="type" value="manual"/>
                      <input type="hidden" name="reqtype" value="processing"/>
                      <table id="warehouse-requests-processing-table">
@@ -383,6 +387,7 @@
                      <p>Il n'y as pas de demande disponibles actuellement.</p>
                   </div>
                   <form id="f-wr-warehouse-requests-waiting" name="f-wr-warehouse-requests-waiting" class="wr-form" method="post" action="" autocomplete="off" >
+                    [% INCLUDE 'csrf-token.inc' %]
                      <input type="hidden" name="type" value="scan"/>
                      <input type="hidden" name="reqtype" value="warehouse-requests-waiting"/>
                      <input type="hidden" name="action" id="action" value="wait"/>
@@ -394,6 +399,7 @@
                      </fieldset>
                   </form>
                   <form id="f-wr-waiting" name="f-wr-waiting" class="wr-form" method="post" action="">
+                    [% INCLUDE 'csrf-token.inc' %]
                      <input type="hidden" name="type" value="manual"/>
                      <input type="hidden" name="reqtype" value="waiting"/>
                   <div class="wr-requests-waiting_table_controls">
@@ -520,6 +526,7 @@
                      <p>Il n'y as pas de demande terminées actuellement.</p>
                   </div>
                   <form id="f-wr-warehouse-requests-completed" name="f-wr-warehouse-requests-completed" class="wr-form" method="post" action="" autocomplete="off" >
+                    [% INCLUDE 'csrf-token.inc' %]
                      <input type="hidden" name="type" value="scan"/>
                      <input type="hidden" name="reqtype" value="warehouse-requests-completed"/>
                      <input type="hidden" name="action" id="action" value="complete"/>
@@ -547,6 +554,9 @@
     [% INCLUDE 'datatables.inc' %]
    <script>
     $(document).ready(function() {
+
+    var csrf_token = $('input[name="csrf_token"]').val();
+
 	$("#warehouse-requests-pending-table,#warehouse-requests-processing-table,#warehouse-requests-waiting-table").dataTable($.extend(true, {}, dataTablesDefaults, {
             "aoColumnDefs": [
                 { "aTargets": [0, -1], "bSortable": false, "bSearchable": false },
@@ -661,6 +671,7 @@
         });
         
         function submitUpRequest() {
+            var csrf_token = $('input[name="csrf_token"]').val();
             $('.wr-form').on('submit', function(e) { //use on if jQuery 1.7+
                 e.preventDefault();  //prevent form from submitting
                 var type = $(this).children('input[name="type"]').val();
@@ -677,7 +688,8 @@
                             data: {
                                 action: action,
                                 id: id,
-                                notes: ""
+                                notes: "",
+                                csrf_token: csrf_token
                             },
                             dataType: 'json',
                             async: false,
@@ -715,7 +727,8 @@
                             data: {
                                 action: action,
                                 id: $(this).val(),
-                                notes: reason
+                                notes: reason,
+                                csrf_token: csrf_token
                             },
                             dataType: 'json',
                             cache: false,
@@ -754,6 +767,7 @@
         }
         
         function Cancel( id, a ) {
+            var csrf_token = $('input[name="csrf_token"]').val();
             notes = prompt(_("Raison de l'annulation:"));
             if ( notes == null ) {
                 return;
@@ -770,7 +784,8 @@
                 data: {
                     action: 'cancel',
                     id: id,
-                    notes: notes
+                    notes: notes,
+                    csrf_token: csrf_token
                 },
                 success: function( data ) {
                     a.closest('tr').remove();
@@ -783,6 +798,7 @@
         }
         
         function Process( id, a ) {
+            var csrf_token = $('input[name="csrf_token"]').val();
             var table_row = a.closest('tr').clone();
             table_row.find('.wr-process-request').remove();
             table_row.find('.wr-process-print-request').remove();
@@ -796,6 +812,7 @@
                 data: {
                     action: 'process',
                     id: id,
+                    csrf_token: csrf_token,
                 },
                 success: function( data ) {
                     a.closest('tr').remove();
@@ -808,6 +825,7 @@
         }
         
         function Wait( id, a ) {
+            var csrf_token = $('input[name="csrf_token"]').val();
             var table_row = a.closest('tr').clone();
             table_row.find('.wr-waiting-request').remove();
             table_row.find('.wr-actions .dropdown  .dropdown-menu li').prepend('<a class="wr-completed-request" href="#" onclick="Completed( '+id+', $(this) ); return false;"><i class="icon-ok-circle"></i>Complete request</a>')
@@ -820,6 +838,7 @@
                 data: {
                     action: 'wait',
                     id: id,
+                    csrf_token: csrf_token
                 },
                 success: function( data ) {
                     a.closest('tr').remove();
@@ -832,6 +851,7 @@
         }
         
         function Complete( id, a ) {
+            var csrf_token = $('input[name="csrf_token"]').val();
             var table_row = a.closest('tr').clone();
             table_row.find('.wr-complete-request').remove();
             
@@ -843,6 +863,7 @@
                 data: {
                     action: 'complete',
                     id: id,
+                    csrf_token: csrf_token
                 },
                 success: function( data ) {
                     a.closest('tr').remove();
@@ -891,6 +912,7 @@
         }
         
         function getList(button, status) {
+            var csrf_token = $('input[name="csrf_token"]').val();
             if (status != 'completed' && status != 'canceled') return;
             var parent = $(button).parent();
             $(button).remove();
@@ -898,6 +920,7 @@
             $.ajax({
                 type: "GET",
                 url: '/api/v1/contrib/wrm/list/are/'+status.toUpperCase(),
+                csrf_token: csrf_token,
                 success: function( data ) {
                     parent.find('.loading').remove();
                     parent.append(`
