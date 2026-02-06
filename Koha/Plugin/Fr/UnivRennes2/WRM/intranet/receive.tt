@@ -69,243 +69,242 @@
                                                 </li>
                                             </ul>
                                             -->
+            <div class="col-sm-10 col-sm-push-2">
+                <main>
+                    <form id="checkin-form" method="post" action="/receive.pl" autocomplete="off" >
+                        <fieldset id="circ_returns_checkin">
+                            <div class="show_checkin_dialog" style="float:right;display:none"><button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Show the last checkin message"><i class="fa fa-info"></i></button></div>
+                            <h1>Réception depuis les magasins</h1>
+                            <p>Si vous devez marquer que le document est manquant et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="hint">Entrez le code barre:</div>
+                                    <div class="form-control-group">
+                                        <input name="barcode" id="barcode" size="14" class="barcode focus" />
+                                        <input type="hidden" name="op" id="op" value="confirm"/>
+                                        <button type="submit" class="btn btn-default">Réceptionner</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset> <!-- /#circ_returns_checkin -->
+                    </form> <!-- /#checkin-form -->
+                    [% IF error %]
+                        <h1>ERREUR !!! [% error %]</h1>
+                    [% END %]
+                    [% IF op == "confirmed" %]
+                        <h2>Mise de côté réussie</h2>
+                        <p>Vous avez mis de côté <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
+                            [% IF item.biblio.author %]  [% item.biblio.author | html %], [% END %]
+                            [% item.itemcallnumber | html %], ([% item.barcode | html %]) pour
+                            [% patron.title | html %]
+                            [% patron.firstname | html %]
+                            [% patron.surname | html %]
+                            <strong>([% patron.cardnumber | html %])</strong>,
+                            à la banque [% reserve.desk.desk_name %].</p>
+                            <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
+                                <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
+                                <input type="hidden" name="itemnumber" value="[% item.itemnumber | html %]">
+                                <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
+                                <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
+                                <input type="hidden" name="tab" value="holdwaiting">
+                            </form>
+                            
+                    [% END %]
+                    [% IF op == "cancel" %]
+                        <h2>Il reste une étape pour déclarer ce document comme manquant et notifier le lecteur</h2>
+                        <p>Vous voulez déclarer manquant [% item.biblio.title | html %],
+                            [% IF item.biblio.author %][% item.biblio.author |html %], [% END %]
+                            [% item.itemcallnumber | html %],
+                            et le notifier à  [% patron.firstname | html %]
+                            [% patron.surname | html %]
+                            <strong>([% patron.cardnumber | html %])</strong>.</p>
+                        [% IF Koha.Preference('CanMarkHoldsToPullAsLost') != 'do_not_allow' %]
+                            <form id="markaslost" name="markaslost" action="/cgi-bin/koha/circ/pendingreserves.pl?returnto=receive.pl" method="post">
+                                <input type="hidden" name="reserve_id" value="[% reserve.reserve_id %]" />
+                                [% IF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow' %]
+                                    <input type="hidden" name="op" value="mark_as_lost" />
+                                    <input type="submit" value="Mark item as lost" />
+                                [% ELSIF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow_and_notify' %]
+                                    <input type="hidden" name="op" value="mark_as_lost_and_notify" />
+                                    <input id="submitmarkaslost" type="submit" value="Déclarer le document manquant et notifier le lecteur" />
+                                [% END %]
+                            </form>
+                        [% END %]
+                    [% END %]
+                    [% IF ( riloop ) %]
+                        <h2>Checked-in items</h2>
+                        <table id="checkedintable">
+                            <thead>
+                                <tr>
+                                    <th class="ci-duedate">Due date</th>
+                                    <th class="ci-title">Title</th>
+                                    <th class="ci-author">Author</th>
+                                    <th class="ci-barcode">Barcode</th>
+                                    <th class="ci-homelibrary">Home library</th>
+                                    <th class="ci-transferlibrary">Transfer to</th>
+                                    <th class="ci-shelvinglocation">Shelving location</th>
+                                    <th class="ci-callnumber">Call number</th>
+                                    <th class="ci-dateaccessioned">Date acquired</th>
+                                    <th class="ci-recordlevelitemtype">Record-level itemtype</th>
+                                    <th class="ci-itemtype">Item type</th>
+                                    <th class="ci-collection">Collection</th>
+                                    <th class="ci-patron">Patron</th>
+                                    <th class="ci-note">Note</th>
+                                </tr>
+                            </thead>
+
+                            [% FOREACH riloo IN riloop %]
+                                <tr>
+                                    <td class="ci-duedate">
+                                        [% IF ( riloo.duedate ) %]
+                                            [% IF ( riloo.return_overdue ) %]
+                                                <span class="overdue">[% riloo.duedate | html %] (overdue)</span>
+                                            [% ELSE %]
+                                                [% riloo.duedate | html %]
+                                            [% END %]
+                                        [% ELSE %]
+                                            <span>Not checked out</span>
+                                        [% END %]
+                                        [% IF ( riloo.damaged ) %]
+                                            <span class="dmg">[% AuthorisedValues.GetDescriptionByKohaField( kohafield => 'items.damaged', authorised_value => riloo.damaged ) | html %]</span>
+                                        [% END %]
+                                    </td>
+                                    <td class="ci-title">
+                                        <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% riloo.itembiblionumber | uri %]">
+                                            [% riloo.itemtitle | html %]
+                                            [% FOREACH subtitle IN riloo.subtitle.split(' \\| ') %] <span class="subtitle">[% subtitle | html %]</span>[% END %]
+                                            [% FOREACH part_number IN riloo.part_number.split(' \\| ') %] <span class="part_number">[% part_number | html %]</span>[% END %]
+                                            [% FOREACH part_name IN riloo.part_name.split(' \\| ') %] <span class="part_name">[% part_name | html %]<span>[% END %]
+                                        </a>
+                                        [% IF ( riloo.enumchron ) %]
+                                            <br/>
+                                            <span class="item_enumeration" style="white-space: nowrap;">[% riloo.enumchron | html %]</span>
+                                        [% END %]
+                                    </td>
+                                    <td class="ci-author">[% riloo.itemauthor | html %]</td>
+                                    <td class="ci-barcode">
+                                        <a href="/cgi-bin/koha/catalogue/moredetail.pl?biblionumber=[% riloo.itembiblionumber | uri %]&amp;itemnumber=[% riloo.itemnumber | uri %]#item[% riloo.itemnumber | uri %]">[% riloo.barcode | html %]</a>
+                                    </td>
+                                    <td class="ci-homelibrary">
+                                        [% Branches.GetName( riloo.homebranch ) | html %]
+                                    </td>
+                                    <td class="ci-transferlibrary">
+                                        [% Branches.GetName( riloo.transferbranch ) | html %]
+                                    </td>
+                                    <td class="ci-shelvinglocation">
+                                        <span class="shelvingloc">[% riloo.location | html %]</span>
+                                    </td>
+                                    <td class="ci-callnumber">
+                                        [% riloo.itemcallnumber | html %]
+                                    </td>
+                                    <td class="ci-dateaccessioned">
+                                        [% riloo.dateaccessioned | $KohaDates %]
+                                    </td>
+                                    <td class="ci-recordlevelitemtype">
+                                        [% ItemTypes.GetDescription( riloo.recordtype ) | html %]
+                                    </td>
+                                    <td class="ci-itemtype">
+                                        [% ItemTypes.GetDescription( riloo.itemtype ) | html %]
+                                    </td>
+                                    <td class="ci-collection">
+                                        [% AuthorisedValues.GetDescriptionByKohaField( kohafield => 'items.ccode', authorised_value => riloo.ccode) | html %]
+                                    </td>
+                                    <td class="ci-patron">
+                                        [% IF ( riloo.duedate ) %]
+                                            [% INCLUDE 'patron-title.inc' patron=riloo.patron hide_patron_infos_if_needed=1 invert_name=1 %]
+                                            [% IF riloo.borissuescount %]
+                                                <span class="results_summary nowrap">
+                                                    <span class="label">Checkouts:</span>
+                                                    <span class="number_box">
+                                                        <a href="/cgi-bin/koha/circ/circulation.pl?borrowernumber=[% riloo.patron.borrowernumber | uri %]">[% riloo.borissuescount | html %]</a>
+                                                    </span>
+                                                </span>
+                                            [% END %]
+                                            <a class="btn btn-default btn-xs printcheckinslip" href="#" data-borrowernumber="[% riloo.patron.borrowernumber | html %]"><i class="fa fa-print"></i> Print checkin slip</a>
+                                        [% ELSE %]
+                                            Not checked out
+                                        [% END %]
+                                    </td>
+                                    <td class="ci-note">
+                                        [% IF ( riloo.patron.borrowernotes ) %]
+                                            <p><span class="circ-hlt patron-note">[% riloo.patron.borrowernotes | html %]</span></p>
+                                        [% END %]
+                                        [% IF ( riloo.itemnote ) %]
+                                            <p><span class="circ-hlt item-note-public">[% riloo.itemnote | html %]</span></p>
+                                        [% END %]
+                                        [% IF ( riloo.itemnotes_nonpublic ) %]
+                                            <p><span class="circ-hlt item-note-nonpublic">[% riloo.itemnotes_nonpublic | html %]</span></p>
+                                        [% END %]
+                                    </td>
+                                </tr>
+                            [% END # /FOREACH riloo %]
+                        </table> <!-- /#checkedintable -->
+                    [% END # /IF riloop %]
+                </main>
+            </div> <!-- /.col-sm-10.col-sm-push-2 -->
             <div class="col-sm-2 col-sm-pull-10">
                 <aside>
                     [% INCLUDE 'circ-nav.inc' %]
                 </aside>
             </div> <!-- /.col-sm-2.col-sm-pull-10 -->
-            <div class="col-sm-12">
-                <main>
-                    <div class="row">
-                        [% IF op == "confirm" %]
-                            <div id="circ-needsconfirmation-modal" class="modal fade audio-alert-action block" data-backdrop="static" data-keyboard="false">
-                                <div class="modal-dialog">
-		                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h3>Confirmer la réception</h3>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Du document <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
-                                                [% IF item.biblio.author %][% item.biblio.author | html %], [% END %]
-                                                [% item.itemcallnumber | html %][% IF item.barcode %],
-                                                    ([% item.barcode |html %])
-                                                [% END %]</p>
-                                            <ul>
-                                                <li>
-                                                    pour le lecteur [% patron.firstname | html %],
-                                                    [% patron.surname | html %]
-                                                    <strong>([% patron.cardnumber | html %])</strong>
-			                        </li>
-                                                <li>
-                                                    à la banque <strong>[% desk.desk_name | html %]<strong>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <form method="post" action="/receive.pl" autocomplete="off">
-                                                [% IF item.barcode %]
-                                                    <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
-                                                [% ELSE %]
-                                                    <label for="missing_barcode">Entrez un code barre pour le document : </label>
-                                                    <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required /><br/>
-                                                [% END %]
-                                                <input type="hidden" name="op" value="confirmed" />
-                                                <input type="hidden" name="wrid" value="[% wrid | html %]" />
-                                                
-                                                <button type="submit" class="approve" accesskey="y"><i class="fa fa-check"></i> Confirmer</button>
-                                            </form>
-                                            <form method="post" action="/receive.pl" autocomplete="off">
-                                                [% IF item.barcode %]
-                                                    <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
-                                                [% ELSE %]
-                                                    <input type="hidden" name="barcode" value="[% barcode | html %]" />
-                                                [% END %]
-                                                <input type="hidden" name="op" value="cancel" />
-                                                <input type="hidden" name="wrid" value="[% wrid | html %]" />
-                                                
-                                                <button type="submit" class="deny" accesskey="a"><i class="fa fa-times"></i> Déclarer le document manquant et notifier le lecteur</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        </div> <!-- /.row -->
+    </div> <!-- /.col-sm-12 -->
+</div> <!-- /.row -->
+
+[% IF op == "confirm" %]
+    <div id="circ-needsconfirmation-modal" class="modal fade audio-alert-action block" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+    <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirmer la réception</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Du document <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
+                        [% IF item.biblio.author %][% item.biblio.author | html %], [% END %]
+                        [% item.itemcallnumber | html %][% IF item.barcode %],
+                            ([% item.barcode |html %])
+                        [% END %]</p>
+                    <ul>
+                        <li>
+                            pour le lecteur [% patron.firstname | html %],
+                            [% patron.surname | html %]
+                            <strong>([% patron.cardnumber | html %])</strong>
+            </li>
+                        <li>
+                            à la banque <strong>[% desk.desk_name | html %]<strong>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <form method="post" action="/receive.pl" autocomplete="off">
+                        [% IF item.barcode %]
+                            <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
+                        [% ELSE %]
+                            <label for="missing_barcode">Entrez un code barre pour le document : </label>
+                            <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required /><br/>
                         [% END %]
+                        <input type="hidden" name="op" value="confirmed" />
+                        <input type="hidden" name="wrid" value="[% wrid | html %]" />
+                        
+                        <button type="submit" class="approve" accesskey="y"><i class="fa fa-check"></i> Confirmer</button>
+                    </form>
+                    <form method="post" action="/receive.pl" autocomplete="off">
+                        [% IF item.barcode %]
+                            <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
+                        [% ELSE %]
+                            <input type="hidden" name="barcode" value="[% barcode | html %]" />
+                        [% END %]
+                        <input type="hidden" name="op" value="cancel" />
+                        <input type="hidden" name="wrid" value="[% wrid | html %]" />
+                        
+                        <button type="submit" class="deny" accesskey="a"><i class="fa fa-times"></i> Déclarer le document manquant et notifier le lecteur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+[% END %]
 
-                        <div class="col-sm-10 col-sm-push-2">
-                            <form id="checkin-form" method="post" action="/receive.pl" autocomplete="off" >
-                                <fieldset id="circ_returns_checkin">
-                                    <div class="show_checkin_dialog" style="float:right;display:none"><button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Show the last checkin message"><i class="fa fa-info"></i></button></div>
-                                    <h1>Réception depuis les magasins</h1>
-                                    <p>Si vous devez marquer que le document est manquant et en notifier le lecteur, merci de pister le code barre de la demande dans le formulaire.</p>
-                                    <div class="row">
-                                        <div class="col-sm-6">
-                                            <div class="hint">Entrez le code barre:</div>
-                                            <div class="form-control-group">
-                                                <input name="barcode" id="barcode" size="14" class="barcode focus" />
-                                                <input type="hidden" name="op" id="op" value="confirm"/>
-                                                <button type="submit" class="btn btn-default">Réceptionner</button>
-                                            </div>
-                                </fieldset> <!-- /#circ_returns_checkin -->
-                            </form> <!-- /#checkin-form -->
-                            [% IF error %]
-                                <h1>ERREUR !!! [% error %]</h1>
-                            [% END %]
-                            [% IF op == "confirmed" %]
-                                <h2>Mise de côté réussie</h2>
-                                <p>Vous avez mis de côté <i><a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% item.biblionumber | html %]">[% item.biblio.title | html %]</a></i>,
-                                    [% IF item.biblio.author %]  [% item.biblio.author | html %], [% END %]
-                                    [% item.itemcallnumber | html %], ([% item.barcode | html %]) pour
-                                    [% patron.title | html %]
-                                    [% patron.firstname | html %]
-                                    [% patron.surname | html %]
-                                    <strong>([% patron.cardnumber | html %])</strong>,
-                                    à la banque [% reserve.desk.desk_name %].</p>
-                                    <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
-                                        <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
-                                        <input type="hidden" name="itemnumber" value="[% item.itemnumber | html %]">
-                                        <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
-                                        <input type="hidden" name="tbr" value="[% Branches.GetLoggedInBranchcode | html %]">
-                                        <input type="hidden" name="tab" value="holdwaiting">
-                                    </form>
-                                    
-                            [% END %]
-                            [% IF op == "cancel" %]
-                                <h2>Il reste une étape pour déclarer ce document comme manquant et notifier le lecteur</h2>
-                                <p>Vous voulez déclarer manquant [% item.biblio.title | html %],
-                                    [% IF item.biblio.author %][% item.biblio.author |html %], [% END %]
-                                    [% item.itemcallnumber | html %],
-                                    et le notifier à  [% patron.firstname | html %]
-                                    [% patron.surname | html %]
-                                    <strong>([% patron.cardnumber | html %])</strong>.</p>
-                                [% IF Koha.Preference('CanMarkHoldsToPullAsLost') != 'do_not_allow' %]
-                                    <form id="markaslost" name="markaslost" action="/cgi-bin/koha/circ/pendingreserves.pl?returnto=receive.pl" method="post">
-                                        <input type="hidden" name="reserve_id" value="[% reserve.reserve_id %]" />
-                                        [% IF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow' %]
-                                            <input type="hidden" name="op" value="mark_as_lost" />
-                                            <input type="submit" value="Mark item as lost" />
-                                        [% ELSIF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow_and_notify' %]
-                                            <input type="hidden" name="op" value="mark_as_lost_and_notify" />
-                                            <input id="submitmarkaslost" type="submit" value="Déclarer le document manquant et notifier le lecteur" />
-                                        [% END %]
-                                    </form>
-                                [% END %]
-                            [% END %]
-                            [% IF ( riloop ) %]
-                                <h2>Checked-in items</h2>
-                                <table id="checkedintable">
-                                    <thead>
-                                        <tr>
-                                            <th class="ci-duedate">Due date</th>
-                                            <th class="ci-title">Title</th>
-                                            <th class="ci-author">Author</th>
-                                            <th class="ci-barcode">Barcode</th>
-                                            <th class="ci-homelibrary">Home library</th>
-                                            <th class="ci-transferlibrary">Transfer to</th>
-                                            <th class="ci-shelvinglocation">Shelving location</th>
-                                            <th class="ci-callnumber">Call number</th>
-                                            <th class="ci-dateaccessioned">Date acquired</th>
-                                            <th class="ci-recordlevelitemtype">Record-level itemtype</th>
-                                            <th class="ci-itemtype">Item type</th>
-                                            <th class="ci-collection">Collection</th>
-                                            <th class="ci-patron">Patron</th>
-                                            <th class="ci-note">Note</th>
-                                        </tr>
-                                    </thead>
-
-                                    [% FOREACH riloo IN riloop %]
-                                        <tr>
-                                            <td class="ci-duedate">
-                                                [% IF ( riloo.duedate ) %]
-                                                    [% IF ( riloo.return_overdue ) %]
-                                                        <span class="overdue">[% riloo.duedate | html %] (overdue)</span>
-                                                    [% ELSE %]
-                                                        [% riloo.duedate | html %]
-                                                    [% END %]
-                                                [% ELSE %]
-                                                    <span>Not checked out</span>
-                                                [% END %]
-                                                [% IF ( riloo.damaged ) %]
-                                                    <span class="dmg">[% AuthorisedValues.GetDescriptionByKohaField( kohafield => 'items.damaged', authorised_value => riloo.damaged ) | html %]</span>
-                                                [% END %]
-                                            </td>
-                                            <td class="ci-title">
-                                                <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% riloo.itembiblionumber | uri %]">
-                                                    [% riloo.itemtitle | html %]
-                                                    [% FOREACH subtitle IN riloo.subtitle.split(' \\| ') %] <span class="subtitle">[% subtitle | html %]</span>[% END %]
-                                                    [% FOREACH part_number IN riloo.part_number.split(' \\| ') %] <span class="part_number">[% part_number | html %]</span>[% END %]
-                                                    [% FOREACH part_name IN riloo.part_name.split(' \\| ') %] <span class="part_name">[% part_name | html %]<span>[% END %]
-                                                </a>
-                                                [% IF ( riloo.enumchron ) %]
-                                                    <br/>
-                                                    <span class="item_enumeration" style="white-space: nowrap;">[% riloo.enumchron | html %]</span>
-                                                [% END %]
-                                            </td>
-                                            <td class="ci-author">[% riloo.itemauthor | html %]</td>
-                                            <td class="ci-barcode">
-                                                <a href="/cgi-bin/koha/catalogue/moredetail.pl?biblionumber=[% riloo.itembiblionumber | uri %]&amp;itemnumber=[% riloo.itemnumber | uri %]#item[% riloo.itemnumber | uri %]">[% riloo.barcode | html %]</a>
-                                            </td>
-                                            <td class="ci-homelibrary">
-                                                [% Branches.GetName( riloo.homebranch ) | html %]
-                                            </td>
-                                            <td class="ci-transferlibrary">
-                                                [% Branches.GetName( riloo.transferbranch ) | html %]
-                                            </td>
-                                            <td class="ci-shelvinglocation">
-                                                <span class="shelvingloc">[% riloo.location | html %]</span>
-                                            </td>
-                                            <td class="ci-callnumber">
-                                                [% riloo.itemcallnumber | html %]
-                                            </td>
-                                            <td class="ci-dateaccessioned">
-                                                [% riloo.dateaccessioned | $KohaDates %]
-                                            </td>
-                                            <td class="ci-recordlevelitemtype">
-                                                [% ItemTypes.GetDescription( riloo.recordtype ) | html %]
-                                            </td>
-                                            <td class="ci-itemtype">
-                                                [% ItemTypes.GetDescription( riloo.itemtype ) | html %]
-                                            </td>
-                                            <td class="ci-collection">
-                                                [% AuthorisedValues.GetDescriptionByKohaField( kohafield => 'items.ccode', authorised_value => riloo.ccode) | html %]
-                                            </td>
-                                            <td class="ci-patron">
-                                                [% IF ( riloo.duedate ) %]
-                                                    [% INCLUDE 'patron-title.inc' patron=riloo.patron hide_patron_infos_if_needed=1 invert_name=1 %]
-                                                    [% IF riloo.borissuescount %]
-                                                        <span class="results_summary nowrap">
-                                                            <span class="label">Checkouts:</span>
-                                                            <span class="number_box">
-                                                                <a href="/cgi-bin/koha/circ/circulation.pl?borrowernumber=[% riloo.patron.borrowernumber | uri %]">[% riloo.borissuescount | html %]</a>
-                                                            </span>
-                                                        </span>
-                                                    [% END %]
-                                                    <a class="btn btn-default btn-xs printcheckinslip" href="#" data-borrowernumber="[% riloo.patron.borrowernumber | html %]"><i class="fa fa-print"></i> Print checkin slip</a>
-                                                [% ELSE %]
-                                                    Not checked out
-                                                [% END %]
-                                            </td>
-                                            <td class="ci-note">
-                                                [% IF ( riloo.patron.borrowernotes ) %]
-                                                    <p><span class="circ-hlt patron-note">[% riloo.patron.borrowernotes | html %]</span></p>
-                                                [% END %]
-                                                [% IF ( riloo.itemnote ) %]
-                                                    <p><span class="circ-hlt item-note-public">[% riloo.itemnote | html %]</span></p>
-                                                [% END %]
-                                                [% IF ( riloo.itemnotes_nonpublic ) %]
-                                                    <p><span class="circ-hlt item-note-nonpublic">[% riloo.itemnotes_nonpublic | html %]</span></p>
-                                                [% END %]
-                                            </td>
-                                        </tr>
-                                    [% END # /FOREACH riloo %]
-                                </table> <!-- /#checkedintable -->
-                            [% END # /IF riloop %]
-
-                                                        </div> <!-- /.col-sm-10.col-sm-push-2 -->
-                                                        
-                                                </div> <!-- /.row -->
-                                 </main>
-                           </div> <!-- /.col-sm-12 -->
-                    </div> <!-- /.row -->
 
 [% MACRO jsinclude BLOCK %]
     [% INCLUDE 'datatables.inc' %]
