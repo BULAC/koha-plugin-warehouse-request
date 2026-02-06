@@ -128,6 +128,8 @@
                   
                   <form id="f-wr-pending" name="f-wr-pending" method="post" class="wr-form" action="">
                     [% INCLUDE 'csrf-token.inc' %]
+                    <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                    <input type="hidden" name="method" value="tool" />
                       <fieldset>
                           <div id="select-status-wr-pending">
                               <div id="status-wr-pending">
@@ -262,6 +264,9 @@
                   
                   <form id="f-wr-processing" name="f-wr-processing" class="wr-form" method="post" action="">
                     [% INCLUDE 'csrf-token.inc' %]
+                    <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                    <input type="hidden" name="method" value="tool" />
+
                      <input type="hidden" name="type" value="manual"/>
                      <input type="hidden" name="reqtype" value="processing"/>
                      <table id="warehouse-requests-processing-table">
@@ -388,6 +393,10 @@
                   </div>
                   <form id="f-wr-warehouse-requests-waiting" name="f-wr-warehouse-requests-waiting" class="wr-form" method="post" action="" autocomplete="off" >
                     [% INCLUDE 'csrf-token.inc' %]
+
+                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                     <input type="hidden" name="method" value="tool" />
+
                      <input type="hidden" name="type" value="scan"/>
                      <input type="hidden" name="reqtype" value="warehouse-requests-waiting"/>
                      <input type="hidden" name="action" id="action" value="wait"/>
@@ -399,6 +408,10 @@
                      </fieldset>
                   </form>
                   <form id="f-wr-waiting" name="f-wr-waiting" class="wr-form" method="post" action="">
+
+                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                     <input type="hidden" name="method" value="tool" />
+
                     [% INCLUDE 'csrf-token.inc' %]
                      <input type="hidden" name="type" value="manual"/>
                      <input type="hidden" name="reqtype" value="waiting"/>
@@ -527,6 +540,9 @@
                   </div>
                   <form id="f-wr-warehouse-requests-completed" name="f-wr-warehouse-requests-completed" class="wr-form" method="post" action="" autocomplete="off" >
                     [% INCLUDE 'csrf-token.inc' %]
+
+                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
+                     <input type="hidden" name="method" value="tool" />
                      <input type="hidden" name="type" value="scan"/>
                      <input type="hidden" name="reqtype" value="warehouse-requests-completed"/>
                      <input type="hidden" name="action" id="action" value="complete"/>
@@ -912,7 +928,6 @@
         }
         
         function getList(button, status) {
-            var csrf_token = $('input[name="csrf_token"]').val();
             if (status != 'completed' && status != 'canceled') return;
             var parent = $(button).parent();
             $(button).remove();
@@ -920,7 +935,6 @@
             $.ajax({
                 type: "GET",
                 url: '/api/v1/contrib/wrm/list/are/'+status.toUpperCase(),
-                csrf_token: csrf_token,
                 success: function( data ) {
                     parent.find('.loading').remove();
                     parent.append(`

@@ -88,8 +88,28 @@ sub new {
 
 sub tool {
     my ( $self, $args ) = @_;
-
     my $query = $self->{'cgi'};
+    
+    # DEBUG
+    warn "=== DEBUG WRM ===";
+    warn "Method param: " . ($cgi->param('method') // 'UNDEFINED');
+    warn "Request method: " . $cgi->request_method();
+    warn "All params: " . join(", ", $cgi->param());
+    
+    # Vérification CSRF pour POST
+    if ( $cgi->request_method() eq 'POST' ) {
+        my $csrf_token = $cgi->param('csrf_token');
+        
+        unless ( Koha::Token->new->check_csrf({
+            session_id => scalar $cgi->cookie('CGISESSID'),
+            token      => $csrf_token,
+        })) {
+            print $cgi->header(-status => '403 Forbidden');
+            print "CSRF token validation failed";
+            return;
+        }
+    }
+
 
     if ( defined $query->param('op') ) {
         if ( $query->param('op') eq 'creation' ) {
