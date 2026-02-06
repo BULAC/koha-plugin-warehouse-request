@@ -248,6 +248,8 @@
                 </aside>
             </div> <!-- /.col-sm-2.col-sm-pull-10 -->
         </div> <!-- /.row -->
+    </div>
+
 
 [% IF op == "confirm" %]
     <div id="circ-needsconfirmation-modal" class="modal fade audio-alert-action block" data-backdrop="static" data-keyboard="false">
