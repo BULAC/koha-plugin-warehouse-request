@@ -26,16 +26,21 @@
 </head>
 
 <body id="circ_warehouse-requests" class="circ">
-   [% INCLUDE 'header.inc' %]
-   [% INCLUDE 'cat-search.inc' %]
+   [% WRAPPER 'header.inc' %]
+        [% INCLUDE 'cat-search.inc' %]
+    [% END %]
    
-    <div id="breadcrumbs">
-      <a href="/cgi-bin/koha/mainpage.pl">Accueil</a>
-      &rsaquo;
-      <a href="/cgi-bin/koha/circ/circulation-home.pl">Circulation</a>
-      &rsaquo;
-      Demandes magasin
-    </div>
+    [% WRAPPER 'sub-header.inc' %]
+        [% WRAPPER breadcrumbs %]
+            [% WRAPPER breadcrumb_item %]
+                <a href="/cgi-bin/koha/circ/circulation-home.pl">Circulation</a>
+            [% END %]
+            [% WRAPPER breadcrumb_item bc_active= 1 %]
+                <a href="#">Demandes Magasin</a>
+            [% END %]
+        [% END %]
+    [% END %]
+    
     <div id="wrm-addbarcode" class="modal fade block" aria-hidden='true'>
         <div class="modal-dialog">
             <div class="modal-content">
