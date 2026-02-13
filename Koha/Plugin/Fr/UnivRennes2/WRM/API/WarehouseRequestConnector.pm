@@ -556,7 +556,7 @@ sub list {
     my $c = shift->openapi->valid_input or return;
     
     my $borrowernumber = $c->validation->param('borrowernumber');
-    my $status = $c->validation->param('status');
+    my $status = $c->validation->param('request_status');
     my $params = {
         archived => 0
     };

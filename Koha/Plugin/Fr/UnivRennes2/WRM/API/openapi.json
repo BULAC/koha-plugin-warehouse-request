@@ -532,7 +532,7 @@
             }
         }
     },
-    "/list/are/{status}": {
+    "/list/are/{request_status}": {
         "get": {
             "x-mojo-to": "Fr::UnivRennes2::WRM::API::WarehouseRequestConnector#list",
             "operationId": "listWRbyStatus",
@@ -541,7 +541,7 @@
                 "application/json; charset=utf-8"
             ],
             "parameters": [{
-                "name": "status",
+                "name": "request_status",
                 "in": "path",
                 "description": "WR Status",
                 "required": true,
