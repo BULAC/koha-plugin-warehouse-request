@@ -55,7 +55,7 @@
                 </div>
                 <div class="modal-footer">
                     <input name="wrm-barcode" id="wrm-barcode" value="" />
-                    <button id="wrm-addbarcode-submit" class="btn btn-default"><i class="fa fa-check"></i> Enregistrer</button>
+                    <button id="wrm-addbarcode-submit" class="btn btn-default"><i></i> Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -147,7 +147,7 @@
                     [% WRAPPER tab_panels %]
                         [% WRAPPER tab_panel tabname="warehouse-requests-pending" bt_active= 1 %]
                             [% IF warehouse_requests_pending.count %]
-                                <form id="f-wr-pending" method="post" action="/cgi-bin/koha/plugins/run.pl">
+                                <form id="f-wr-pending" method="post" action="">
                                     [% INCLUDE 'csrf-token.inc' %]
                                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                                     <input type="hidden" name="method" value="tool" />
@@ -156,103 +156,107 @@
                                     
                                     
                                     <div class="page-section">
-                                        <fieldset class="action">
-                                            <label for="action-pending">Marquer les éléments sélectionnés comme :</label>
-                                            <select name="action" id="action-pending">
-                                                <option value="process">En traitement</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fa fa-check"></i> Valider et imprimer
-                                            </button>
-                                        </fieldset>
-
-                                        <table id="warehouse-requests-pending-table" class="table table-bordered table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th class="NoSort">
-                                                        <input type="checkbox" id="select-all-pending">
-                                                    </th>
-                                                    <th>N°</th>
-                                                    <th>Notice</th>
-                                                    <th>Informations complémentaires</th>
-                                                    <th>Site</th>
-                                                    <th>Type de document</th>
-                                                    <th>Cote</th>
-                                                    <th>Code à barres</th>
-                                                    <th>Adhérent</th>
-                                                    <th>Dates</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                [% FOREACH wr IN warehouse_requests_pending %]
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" name="id" value="[% wr.id | html %]" class="selection">
-                                                    </td>
-                                                    <td>[% wr.id | html %]</td>
-                                                    <td>
-                                                        <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% wr.biblionumber | uri %]" class="title">
-                                                            [% wr.biblio.title | html %]
-                                                        </a>
-                                                        [% IF wr.biblio.author %]
-                                                            <p class="author">par [% wr.biblio.author | html %]</p>
-                                                        [% END %]
-                                                        [% IF wr.biblio.biblioitem.isbn %]
+                                        <div id="status-wr-pending">
+                                            <fieldset class="action">
+                                                <label for="action-pending">Marquer les éléments sélectionnés comme :</label>
+                                                <select name="action" id="action-pending">
+                                                    <option value="process">En traitement</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i></i> Valider et imprimer
+                                                </button>
+                                            </fieldset>
+                                        </div> <!-- /#status-wr-pending -->
+                                        
+                                        <div id="warehouse-requests-pending">
+                                            <table id="warehouse-requests-pending-table" class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="NoSort">
+                                                            <input type="checkbox" id="select-all-pending">
+                                                        </th>
+                                                        <th>N°</th>
+                                                        <th>Notice</th>
+                                                        <th>Informations complémentaires</th>
+                                                        <th>Site</th>
+                                                        <th>Type de document</th>
+                                                        <th>Cote</th>
+                                                        <th>Code à barres</th>
+                                                        <th>Adhérent</th>
+                                                        <th>Dates</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    [% FOREACH wr IN warehouse_requests_pending %]
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" name="id" value="[% wr.id | html %]" class="selection">
+                                                        </td>
+                                                        <td>[% wr.id | html %]</td>
+                                                        <td>
+                                                            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% wr.biblionumber | uri %]" class="title">
+                                                                [% wr.biblio.title | html %]
+                                                            </a>
+                                                            [% IF wr.biblio.author %]
+                                                                <p class="author">par [% wr.biblio.author | html %]</p>
+                                                            [% END %]
+                                                            [% IF wr.biblio.biblioitem.isbn %]
                                                             <span class="results_summary isbn">
                                                                 <span class="label">ISBN :</span> [% wr.biblio.biblioitem.isbn | html %]
                                                             </span>
-                                                        [% END %]
-                                                    </td>
-                                                    <td>
-                                                        [% IF wr.volume %]
-                                                            <span class="label">Volume(s) :</span> [% wr.volume | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.issue %]
+                                                            [% END %]
+                                                        </td>
+                                                        <td>
+                                                            [% IF wr.volume %]
+                                                                <span class="label">Volume(s) :</span> [% wr.volume | html %]<br>
+                                                                [% END %]
+                                                            [% IF wr.issue %]
                                                             <span class="label">Numéro(s) :</span> [% wr.issue | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.date %]
+                                                            [% END %]
+                                                            [% IF wr.date %]
                                                             <span class="label">Date :</span> [% wr.date | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.patron_notes %]
+                                                            [% END %]
+                                                            [% IF wr.patron_notes %]
                                                             <span class="label">Autre information :</span> [% wr.patron_notes | html %]
-                                                        [% END %]
-                                                    </td>
-                                                    <td>[% Branches.GetName(wr.item.holdingbranch) | html %]</td>
-                                                    <td>[% ItemTypes.GetDescription(wr.item.effective_itemtype) | html %]</td>
-                                                    <td>
-                                                        [% IF wr.item.location %]
-                                                            <span class="location">
-                                                                [% AuthorisedValues.GetDescriptionByKohaField(kohafield => 'items.location', authorised_value => wr.item.location) | html %]
-                                                            </span>
-                                                        [% END %]
-                                                        [% wr.item.itemcallnumber | html %]
-                                                    </td>
-                                                    <td>
-                                                        <a href="/cgi-bin/koha/catalogue/moredetail.pl?biblionumber=[% wr.biblionumber | uri %]&itemnumber=[% wr.itemnumber | uri %]">
-                                                            [% wr.item.barcode | html %]
-                                                        </a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% wr.borrower.borrowernumber | uri %]">
-                                                            [% wr.borrower.surname | html %][% IF wr.borrower.firstname %], [% wr.borrower.firstname | html %][% END %]
-                                                        </a>
-                                                        [% IF wr.patron_name %]
-                                                            <br><span class="patron_name">[% wr.patron_name | html %]</span>
-                                                        [% END %]
-                                                        [% IF wr.borrower.phone %]
-                                                            <br>[% wr.borrower.phone | html %]
-                                                        [% END %]
-                                                    </td>
-                                                    <td>
-                                                        <span class="label">Création :</span> 
-                                                        [% wr.created_on | $KohaDates with_hours => 1 %]<br>
-                                                        <span class="label">Mise à jour :</span> 
-                                                        [% wr.updated_on | $KohaDates with_hours => 1 %]
-                                                    </td>
-                                                </tr>
-                                                [% END %]
-                                            </tbody>
-                                        </table>
+                                                            [% END %]
+                                                        </td>
+                                                        <td>[% Branches.GetName(wr.item.holdingbranch) | html %]</td>
+                                                        <td>[% ItemTypes.GetDescription(wr.item.effective_itemtype) | html %]</td>
+                                                        <td>
+                                                            [% IF wr.item.location %]
+                                                                <span class="location">
+                                                                    [% AuthorisedValues.GetDescriptionByKohaField(kohafield => 'items.location', authorised_value => wr.item.location) | html %]
+                                                                </span>
+                                                            [% END %]
+                                                            [% wr.item.itemcallnumber | html %]
+                                                        </td>
+                                                        <td>
+                                                            <a href="/cgi-bin/koha/catalogue/moredetail.pl?biblionumber=[% wr.biblionumber | uri %]&itemnumber=[% wr.itemnumber | uri %]">
+                                                                [% wr.item.barcode | html %]
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% wr.borrower.borrowernumber | uri %]">
+                                                                [% wr.borrower.surname | html %][% IF wr.borrower.firstname %], [% wr.borrower.firstname | html %][% END %]
+                                                            </a>
+                                                            [% IF wr.patron_name %]
+                                                                <br><span class="patron_name">[% wr.patron_name | html %]</span>
+                                                            [% END %]
+                                                            [% IF wr.borrower.phone %]
+                                                                <br>[% wr.borrower.phone | html %]
+                                                                [% END %]
+                                                            </td>
+                                                            <td>
+                                                                <span class="label">Création :</span> 
+                                                                [% wr.created_on | $KohaDates with_hours => 1 %]<br>
+                                                                <span class="label">Mise à jour :</span> 
+                                                                [% wr.updated_on | $KohaDates with_hours => 1 %]
+                                                            </td>
+                                                        </tr>
+                                                    [% END %]
+                                                </tbody>
+                                            </table>
+                                        </div> <!-- /#warehouse-requests-pending -->
                                     </div> <!-- /.page-section -->
 
                                 </form>
@@ -380,7 +384,7 @@
                                         </ol>
                                         <fieldset class="action">
                                             <button type="submit" class="btn btn-default">
-                                                <i class="fa fa-check"></i> Valider
+                                                <i></i> Valider
                                             </button>
                                         </fieldset>
                                     </fieldset>
@@ -509,7 +513,7 @@
                                             <input type="text" name="other_reason" id="other-reason-input-waiting" placeholder="Merci d'indiquer la raison ici..." size="31" />
                                         </span>
                                         <button type="submit" class="btn btn-default">
-                                            <i class="fa fa-check"></i> Valider
+                                            <i></i> Valider
                                         </button>
                                     </fieldset>
                                 </form>
@@ -551,7 +555,7 @@
                                     </ol>
                                     <fieldset class="action">
                                         <button type="submit" class="btn btn-default">
-                                            <i class="fa fa-check"></i> Valider
+                                            <i></i> Valider
                                         </button>
                                     </fieldset>
                                 </fieldset>
