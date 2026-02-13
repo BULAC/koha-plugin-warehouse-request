@@ -602,13 +602,13 @@
             }
         }
         
-        $('#warehouse-request-tabs').tabs({
-            // Correct table sizing for tables hidden in tabs
-            // http://www.datatables.net/examples/api/tabs_and_scrolling.html
-            "activate": function(event, ui) {
-                $( $.fn.dataTable.tables( true ) ).DataTable().columns.adjust();
-            }
-        });
+        // $('#warehouse-request-tabs').tabs({
+        //     // Correct table sizing for tables hidden in tabs
+        //     // http://www.datatables.net/examples/api/tabs_and_scrolling.html
+        //     "activate": function(event, ui) {
+        //         $( $.fn.dataTable.tables( true ) ).DataTable().columns.adjust();
+        //     }
+        // });
         
         $("#warehouse-requests-pending-table,#warehouse-requests-processing-table,#warehouse-requests-waiting-table").dataTable($.extend(true, {}, dataTablesDefaults, {
                 "aoColumnDefs": [
