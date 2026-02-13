@@ -590,49 +590,51 @@
     [% INCLUDE 'datatables.inc' %]
     <script>
 
-    var csrf_token = $('input[name="csrf_token"]').val();
-    
-    var checkboxes = document.getElementsByTagName('input');
-    
-    for (var i=0; i<checkboxes.length; i++)  {
-        if (checkboxes[i].type == 'checkbox')   {
-            checkboxes[i].checked = false;
-        }
-    }
-    
-    $('#warehouse-request-tabs').tabs({
-        // Correct table sizing for tables hidden in tabs
-        // http://www.datatables.net/examples/api/tabs_and_scrolling.html
-        "activate": function(event, ui) {
-            $( $.fn.dataTable.tables( true ) ).DataTable().columns.adjust();
-        }
-    });
-    
-    $("#warehouse-requests-pending-table,#warehouse-requests-processing-table,#warehouse-requests-waiting-table").dataTable($.extend(true, {}, dataTablesDefaults, {
-            "aoColumnDefs": [
-                { "aTargets": [0, -1], "bSortable": false, "bSearchable": false },
-            ],
-        }));
+    $(document).ready(function(){
 
-        if(window.location.hash) {
-            var hash = window.location.hash.substring(1); 
-            if($("#f-wr-"+hash+'').size() > 0){
-                console.log(hash);
-                $('#f-wr-'+hash+' #id').focus();
+        var csrf_token = $('input[name="csrf_token"]').val();
+        
+        var checkboxes = document.getElementsByTagName('input');
+        
+        for (var i=0; i<checkboxes.length; i++)  {
+            if (checkboxes[i].type == 'checkbox')   {
+                checkboxes[i].checked = false;
             }
-        }  
+        }
         
-        submitUpRequest();
-        
-        [% IF warehouse_requests_pending.count %]
-        $(".wr-pending-none").hide();
-        $("#warehouse-requests-pending-table  input[type='checkbox']").prop('checked', true);
-        $(".wr-requests-pending_table_controls .SelectAll").click(function(e){
-        e.preventDefault();
-            $("#warehouse-requests-pending-table input[type='checkbox']").prop('checked', true);
+        $('#warehouse-request-tabs').tabs({
+            // Correct table sizing for tables hidden in tabs
+            // http://www.datatables.net/examples/api/tabs_and_scrolling.html
+            "activate": function(event, ui) {
+                $( $.fn.dataTable.tables( true ) ).DataTable().columns.adjust();
+            }
         });
-        $(".wr-requests-pending_table_controls .ClearAll").click(function(e){
-        e.preventDefault();
+        
+        $("#warehouse-requests-pending-table,#warehouse-requests-processing-table,#warehouse-requests-waiting-table").dataTable($.extend(true, {}, dataTablesDefaults, {
+                "aoColumnDefs": [
+                    { "aTargets": [0, -1], "bSortable": false, "bSearchable": false },
+                ],
+            }));
+
+            if(window.location.hash) {
+                var hash = window.location.hash.substring(1); 
+                if($("#f-wr-"+hash+'').size() > 0){
+                    console.log(hash);
+                    $('#f-wr-'+hash+' #id').focus();
+                }
+            }  
+            
+            submitUpRequest();
+            
+            [% IF warehouse_requests_pending.count %]
+            $(".wr-pending-none").hide();
+            $("#warehouse-requests-pending-table  input[type='checkbox']").prop('checked', true);
+            $(".wr-requests-pending_table_controls .SelectAll").click(function(e){
+                e.preventDefault();
+                $("#warehouse-requests-pending-table input[type='checkbox']").prop('checked', true);
+            });
+            $(".wr-requests-pending_table_controls .ClearAll").click(function(e){
+            e.preventDefault();
             $("#warehouse-requests-pending-table input[type='checkbox']").prop('checked', false);
         });
         
@@ -641,71 +643,72 @@
         [% IF warehouse_requests_processing.count %]
         $(".wr-processing-none").hide();
         $(".wr-requests-processing_table_controls .SelectAll").click(function(e){
-        e.preventDefault();
+            e.preventDefault();
             $("#warehouse-requests-processing-table input[type='checkbox']").prop('checked', true);
         });
         $(".wr-requests-processing_table_controls .ClearAll").click(function(e){
-        e.preventDefault();
+            e.preventDefault();
             $("#warehouse-requests-processing-table input[type='checkbox']").prop('checked', false);
         });
         $("#other_reason-wr-processing").hide();
         $("#reason-wr-processing").change(function(){
             if($(this).val() == "other"){
                 $(this).hide();
-                $("#other_reason-wr-processing").show();
-            }
-        });
-        [% END %]
-        
-        [% IF warehouse_requests_waiting.count %]
-        $(".wr-waiting-none").hide();
-        $(".wr-requests-waiting_table_controls .SelectAll").click(function(e){
-        e.preventDefault();
+                    $("#other_reason-wr-processing").show();
+                }
+            });
+            [% END %]
+            
+            [% IF warehouse_requests_waiting.count %]
+            $(".wr-waiting-none").hide();
+            $(".wr-requests-waiting_table_controls .SelectAll").click(function(e){
+            e.preventDefault();
             $("#warehouse-requests-waiting-table input[type='checkbox']").prop('checked', true);
         });
-        $(".wr-requests-waiting_table_controls .ClearAll").click(function(e){
-        e.preventDefault();
-            $("#warehouse-requests-waiting-table input[type='checkbox']").prop('checked', false);
-        });
-        $("#other_reason-wr-waiting").hide();
-        $("#reason-wr-waiting").change(function(){
-            if($(this).val() == "other"){
-                $(this).hide();
-                $("#other_reason-wr-waiting").show();
-            }
-        }); 
-        [% END %]
-        
-        $(".wr-canceled-none").hide();
-        $(".wr-completed-none").hide();
-        
-        $("a[href*=back]").click(function(){
-            var sid = $(this).attr("href").replace(/#back/,"");
-            $("#reason"+sid).show().find("option[value='']").attr("selected","selected");
-            $("#other_reason"+sid).hide();
-        });
-        
-        $("a.wr-print-request").click(function(e) {
-            e.preventDefault();
-            var id = $(this).attr('id');
-            //PrintSlip('/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=ticket&id='+id);
-            //PrintSlip('/cgi-bin/koha/circ/printslip.pl?reserves='+id);
-            var baseURL = window.location.origin;
-            var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3ABulac%3A%3ABulacReports&method=tool&sub=printwrm&id=' + id;
-            PrintSlip(fullURL);
-            return false;
-        });
-        
-        $("a#load-completed-button").click(function() {
-            getList($(this),'completed');
-        });
-        $("a#load-canceled-button").click(function() {
-            getList($(this),'canceled');
-        });
+            $(".wr-requests-waiting_table_controls .ClearAll").click(function(e){
+                e.preventDefault();
+                $("#warehouse-requests-waiting-table input[type='checkbox']").prop('checked', false);
+            });
+            $("#other_reason-wr-waiting").hide();
+            $("#reason-wr-waiting").change(function(){
+                if($(this).val() == "other"){
+                    $(this).hide();
+                    $("#other_reason-wr-waiting").show();
+                }
+            }); 
+            [% END %]
+            
+            $(".wr-canceled-none").hide();
+            $(".wr-completed-none").hide();
+            
+            $("a[href*=back]").click(function(){
+                var sid = $(this).attr("href").replace(/#back/,"");
+                $("#reason"+sid).show().find("option[value='']").attr("selected","selected");
+                $("#other_reason"+sid).hide();
+            });
+            
+            $("a.wr-print-request").click(function(e) {
+                e.preventDefault();
+                var id = $(this).attr('id');
+                //PrintSlip('/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=ticket&id='+id);
+                //PrintSlip('/cgi-bin/koha/circ/printslip.pl?reserves='+id);
+                var baseURL = window.location.origin;
+                var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3ABulac%3A%3ABulacReports&method=tool&sub=printwrm&id=' + id;
+                PrintSlip(fullURL);
+                return false;
+            });
+            
+            $("a#load-completed-button").click(function() {
+                getList($(this),'completed');
+            });
+            $("a#load-canceled-button").click(function() {
+                getList($(this),'canceled');
+            });
 
-
-
-
+    });
+        
+        
+        
     function submitUpRequest() {
         var csrf_token = $('input[name="csrf_token"]').val();
         $('.wr-form').on('submit', function(e) { //use on if jQuery 1.7+
