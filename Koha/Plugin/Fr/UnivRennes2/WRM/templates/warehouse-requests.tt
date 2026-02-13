@@ -64,8 +64,6 @@
     <div class="row">
         <div class="col-sm-2 col-sm-pull-10">
             <aside>
-                [% INCLUDE 'circ-nav.inc' %]
-                
                 <div id="filters">
                     <form id="wr-filters-form" method="post" action="/cgi-bin/koha/plugins/run.pl">
                         [% INCLUDE 'csrf-token.inc' %]
@@ -112,9 +110,10 @@
                         </fieldset>
                     </form>
                 </div> <!-- /#filters -->
+                [% INCLUDE 'circ-nav.inc' %]
             </aside>
         </div> <!-- /.col-sm-2.col-sm-pull-10 -->
-        
+
         <div class="col-sm-10 col-sm-push-2">
             <main>
                 [% INCLUDE 'messages.inc' %]
