@@ -147,7 +147,7 @@
                     [% WRAPPER tab_panels %]
                         [% WRAPPER tab_panel tabname="warehouse-requests-pending" bt_active= 1 %]
                             [% IF warehouse_requests_pending.count %]
-                                <form id="f-wr-pending" class="wr-form" method="post" action="">
+                                <form id="f-wr-pending" name="f-wr-pending" class="wr-form" method="post" action="">
                                     [% INCLUDE 'csrf-token.inc' %]
                                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                                     <input type="hidden" name="method" value="tool" />
