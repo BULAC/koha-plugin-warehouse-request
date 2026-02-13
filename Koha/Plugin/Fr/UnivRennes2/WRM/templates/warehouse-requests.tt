@@ -66,7 +66,7 @@
             <main>
                 [% INCLUDE 'messages.inc' %]
                 
-                <h1>Demandes différées</h1>
+                <h1>Demandes magasin</h1>
 
                 [% WRAPPER tabs id="warehouse-request-tabs" %]
                     [% WRAPPER tabs_nav %]
@@ -101,8 +101,19 @@
                                     <input type="hidden" name="method" value="tool" />
                                     <input type="hidden" name="type" value="manual"/>
                                     <input type="hidden" name="reqtype" value="pending"/>
-
+                                    
+                                    
                                     <div class="page-section">
+                                        <fieldset class="action">
+                                            <label for="action-pending">Marquer les éléments sélectionnés comme :</label>
+                                            <select name="action" id="action-pending">
+                                                <option value="process">En traitement</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-check"></i> Valider et imprimer
+                                            </button>
+                                        </fieldset>
+
                                         <table id="warehouse-requests-pending-table" class="table table-bordered table-striped">
                                             <thead>
                                                 <tr>
@@ -192,15 +203,6 @@
                                         </table>
                                     </div> <!-- /.page-section -->
 
-                                    <fieldset class="action">
-                                        <label for="action-pending">Marquer les éléments sélectionnés comme :</label>
-                                        <select name="action" id="action-pending">
-                                            <option value="process">En traitement</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-default">
-                                            <i class="fa fa-check"></i> Valider et imprimer
-                                        </button>
-                                    </fieldset>
                                 </form>
                             [% ELSE %]
                                 <div class="dialog message">
@@ -521,7 +523,7 @@
 
         <div class="col-sm-2 col-sm-pull-10">
             <aside>
-                [% INCLUDE 'circ-menu.inc' %]
+                [% INCLUDE 'circ-nav.inc' %]
                 
                 <div id="filters">
                     <form id="wr-filters-form" method="post" action="/cgi-bin/koha/plugins/run.pl">
@@ -579,7 +581,7 @@
     [% INCLUDE 'datatables.inc' %]
     <script>
 
-    function initWarehouseRequests() {
+    /*function initWarehouseRequests() {
         // Vérifier si jQuery UI Tabs est disponible
         if (typeof $.fn.tabs === 'undefined') {
             console.log('⏳ jQuery UI pas encore chargé, on attend...');
@@ -589,7 +591,7 @@
         
         console.log('jQuery UI chargé');    
     
-       
+     */  
     var csrf_token = $('input[name="csrf_token"]').val();
 
     
