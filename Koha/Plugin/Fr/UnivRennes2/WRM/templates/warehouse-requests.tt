@@ -65,7 +65,7 @@
         <div class="col-sm-2 col-sm-pull-10">
             <aside>
                 <div id="filters">
-                    <form id="wr-filters-form" method="post" action="/cgi-bin/koha/plugins/run.pl">
+                    <form id="wr-filters-form" method="post">
                         [% INCLUDE 'csrf-token.inc' %]
                         <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                         <input type="hidden" name="method" value="tool" />
@@ -147,7 +147,7 @@
                     [% WRAPPER tab_panels %]
                         [% WRAPPER tab_panel tabname="warehouse-requests-pending" bt_active= 1 %]
                             [% IF warehouse_requests_pending.count %]
-                                <form id="f-wr-pending" method="post" action="">
+                                <form id="f-wr-pending" class="wr-form" method="post" action="">
                                     [% INCLUDE 'csrf-token.inc' %]
                                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                                     <input type="hidden" name="method" value="tool" />
@@ -158,8 +158,8 @@
                                     <div class="page-section">
                                         <div id="status-wr-pending">
                                             <fieldset class="action">
-                                                <label for="action-pending">Marquer les éléments sélectionnés comme :</label>
-                                                <select name="action" id="action-pending">
+                                                <label for="action">Marquer les éléments sélectionnés comme :</label>
+                                                <select name="action" id="action">
                                                     <option value="process">En traitement</option>
                                                 </select>
                                                 <button type="submit" class="btn btn-primary">
@@ -270,7 +270,7 @@
                         [% WRAPPER tab_panel tabname="warehouse-requests-processing" %]
                             [% IF warehouse_requests_processing.count %]
                                 <div class="btn-toolbar">
-                                    <a href="/cgi-bin/koha/plugins/run.pl?class=Koha::Plugin::Fr::UnivRennes2::WRM&method=receive" class="btn btn-danger btn-lg">
+                                    <a href="/receive.pl" class="btn btn-danger btn-lg">
                                         <i class="fa fa-rocket"></i> Faire la réception ou déclarer le document manquant
                                     </a>
                                 </div>
@@ -378,8 +378,8 @@
                                         <legend>Ajouter une demande</legend>
                                         <ol>
                                             <li>
-                                                <label for="barcode-waiting" class="required">Code à barres :</label>
-                                                <input type="text" name="id" id="barcode-waiting" size="14" class="focus" required="required"/>
+                                                <label for="id" class="required">Code à barres :</label>
+                                                <input type="text" name="id" id="id" size="14" class="focus" required="required"/>
                                             </li>
                                         </ol>
                                         <fieldset class="action">
@@ -390,7 +390,7 @@
                                     </fieldset>
                                 </form>
 
-                                <form id="f-wr-waiting" method="post" action="/cgi-bin/koha/plugins/run.pl">
+                                <form id="f-wr-waiting" method="post" name="f-wr-warehouse-requests-waiting" class="wr-form" action="" autocomplete="off">
                                     [% INCLUDE 'csrf-token.inc' %]
                                     <input type="hidden" name="class" value="Koha::Plugin::Fr::UnivRennes2::WRM" />
                                     <input type="hidden" name="method" value="tool" />
@@ -398,130 +398,135 @@
                                     <input type="hidden" name="reqtype" value="waiting"/>
 
                                     <div class="page-section">
-                                        <table id="warehouse-requests-waiting-table" class="table table-bordered table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th class="NoSort">
-                                                        <input type="checkbox" id="select-all-waiting">
-                                                    </th>
-                                                    <th>N°</th>
-                                                    <th>Notice</th>
-                                                    <th>Informations complémentaires</th>
-                                                    <th>Site</th>
-                                                    <th>Type de document</th>
-                                                    <th>Cote</th>
-                                                    <th>Code à barres</th>
-                                                    <th>Adhérent</th>
-                                                    <th>Dates</th>
-                                                    <th class="NoSort">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                [% FOREACH wr IN warehouse_requests_waiting %]
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" name="id" value="[% wr.id | html %]" class="selection">
-                                                    </td>
-                                                    <td>[% wr.id | html %]</td>
-                                                    <td>
-                                                        <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% wr.biblionumber | uri %]" class="title">
-                                                            [% wr.biblio.title | html %]
-                                                        </a>
-                                                        [% IF wr.biblio.author %]
+                                        <div id="warehouse-requests-waiting">
+                                            <table id="warehouse-requests-waiting-table" class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="NoSort">
+                                                            <input type="checkbox" id="select-all-waiting">
+                                                        </th>
+                                                        <th>N°</th>
+                                                        <th>Notice</th>
+                                                        <th>Informations complémentaires</th>
+                                                        <th>Site</th>
+                                                        <th>Type de document</th>
+                                                        <th>Cote</th>
+                                                        <th>Code à barres</th>
+                                                        <th>Adhérent</th>
+                                                        <th>Dates</th>
+                                                        <th class="NoSort">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    [% FOREACH wr IN warehouse_requests_waiting %]
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" name="id" value="[% wr.id | html %]" class="selection">
+                                                        </td>
+                                                        <td>[% wr.id | html %]</td>
+                                                        <td>
+                                                            <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% wr.biblionumber | uri %]" class="title">
+                                                                [% wr.biblio.title | html %]
+                                                            </a>
+                                                            [% IF wr.biblio.author %]
                                                             <p class="author">par [% wr.biblio.author | html %]</p>
-                                                        [% END %]
-                                                    </td>
-                                                    <td>
-                                                        [% IF wr.volume %]
+                                                            [% END %]
+                                                        </td>
+                                                        <td>
+                                                            [% IF wr.volume %]
                                                             <span class="label">Volume(s) :</span> [% wr.volume | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.issue %]
-                                                            <span class="label">Numéro(s) :</span> [% wr.issue | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.date %]
-                                                            <span class="label">Date :</span> [% wr.date | html %]<br>
-                                                        [% END %]
-                                                        [% IF wr.patron_notes %]
+                                                            [% END %]
+                                                            [% IF wr.issue %]
+                                                                <span class="label">Numéro(s) :</span> [% wr.issue | html %]<br>
+                                                                [% END %]
+                                                                [% IF wr.date %]
+                                                                <span class="label">Date :</span> [% wr.date | html %]<br>
+                                                            [% END %]
+                                                            [% IF wr.patron_notes %]
                                                             <span class="label">Autre information :</span> [% wr.patron_notes | html %]
-                                                        [% END %]
-                                                    </td>
-                                                    <td>[% Branches.GetName(wr.item.holdingbranch) | html %]</td>
-                                                    <td>[% ItemTypes.GetDescription(wr.item.effective_itemtype) | html %]</td>
-                                                    <td>
-                                                        [% IF wr.item.location %]
+                                                            [% END %]
+                                                        </td>
+                                                        <td>[% Branches.GetName(wr.item.holdingbranch) | html %]</td>
+                                                        <td>[% ItemTypes.GetDescription(wr.item.effective_itemtype) | html %]</td>
+                                                        <td>
+                                                            [% IF wr.item.location %]
                                                             <span class="location">
                                                                 [% AuthorisedValues.GetDescriptionByKohaField(kohafield => 'items.location', authorised_value => wr.item.location) | html %]
-                                                            </span>
-                                                        [% END %]
-                                                        [% wr.item.itemcallnumber | html %]
-                                                    </td>
-                                                    <td>[% wr.item.barcode | html %]</td>
-                                                    <td>
-                                                        <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% wr.borrower.borrowernumber | uri %]">
-                                                            [% wr.borrower.surname | html %][% IF wr.borrower.firstname %], [% wr.borrower.firstname | html %][% END %]
-                                                        </a>
-                                                        [% IF wr.patron_name %]
-                                                            <br><span class="patron_name">[% wr.patron_name | html %]</span>
-                                                        [% END %]
-                                                        [% IF wr.borrower.phone %]
+                                                                </span>
+                                                            [% END %]
+                                                            [% wr.item.itemcallnumber | html %]
+                                                        </td>
+                                                        <td>[% wr.item.barcode | html %]</td>
+                                                        <td>
+                                                            <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% wr.borrower.borrowernumber | uri %]">
+                                                                [% wr.borrower.surname | html %][% IF wr.borrower.firstname %], [% wr.borrower.firstname | html %][% END %]
+                                                            </a>
+                                                            [% IF wr.patron_name %]
+                                                                <br><span class="patron_name">[% wr.patron_name | html %]</span>
+                                                            [% END %]
+                                                            [% IF wr.borrower.phone %]
                                                             <br>[% wr.borrower.phone | html %]
-                                                        [% END %]
-                                                    </td>
-                                                    <td>
-                                                        <span class="label">Création :</span> 
-                                                        [% wr.created_on | $KohaDates with_hours => 1 %]<br>
-                                                        <span class="label">Mise à jour :</span> 
-                                                        [% wr.updated_on | $KohaDates with_hours => 1 %]<br>
-                                                        [% IF wr.deadline %]
+                                                            [% END %]
+                                                        </td>
+                                                        <td>
+                                                            <span class="label">Création :</span> 
+                                                            [% wr.created_on | $KohaDates with_hours => 1 %]<br>
+                                                            <span class="label">Mise à jour :</span> 
+                                                            [% wr.updated_on | $KohaDates with_hours => 1 %]<br>
+                                                            [% IF wr.deadline %]
                                                             [% SET today = date.format(date.now, '%Y%m%d') %]
                                                             [% SET deadline_str = wr.deadline.replace('-','') %]
-                                                            [% IF deadline_str < today %]
+                                                                [% IF deadline_str < today %]
                                                                 <span class="error label">
-                                                            [% ELSE %]
+                                                                [% ELSE %]
                                                                 <span class="label">
-                                                            [% END %]
-                                                            À chercher avant le : [% wr.deadline | $KohaDates %]</span>
-                                                        [% END %]
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-default btn-xs wr-print-request" data-id="[% wr.id | html %]">
-                                                            <i class="fa fa-print"></i> Imprimer
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                [% END %]
-                                            </tbody>
-                                        </table>
+                                                                    [% END %]
+                                                                À chercher avant le : [% wr.deadline | $KohaDates %]</span>
+                                                                [% END %]
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-default btn-xs wr-print-request" data-id="[% wr.id | html %]">
+                                                                <i class="fa fa-print"></i> Imprimer
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    [% END %]
+                                                </tbody>
+                                            </table>
+                                        </div> <!-- /#warehouse-requests-waiting -->
                                     </div> <!-- /.page-section -->
+                                    
+                                    <div id="status-wr-waiting">
 
-                                    <fieldset class="action">
-                                        <label for="action-waiting">Marquer les éléments sélectionnés comme :</label>
-                                        <select name="action" id="action-waiting">
-                                            <option value="">-- Choisir un état --</option>
-                                            <option value="complete">Terminé</option>
-                                            <option value="cancel">Annulé</option>
-                                        </select>
-                                        <label for="reason-waiting">avec le message :</label>
-                                        <select name="reason" id="reason-waiting">
-                                            <option value="">-- Choisir --</option>
-                                            [% FOREACH reason IN reasonsloop %]
+                                        <fieldset class="action">
+                                            <label for="action">Marquer les éléments sélectionnés comme :</label>
+                                            <select name="action" id="action">
+                                                <option value="">-- Choisir un état --</option>
+                                                <option value="complete">Terminé</option>
+                                                <option value="cancel">Annulé</option>
+                                            </select>
+                                            <label for="reason-wr-waiting">avec le message :</label>
+                                            <select name="reason" id="reason-wr-waiting">
+                                                <option value="">-- Choisir --</option>
+                                                [% FOREACH reason IN reasonsloop %]
                                                 <option value="[% reason.lib | html %]">[% reason.lib | html %]</option>
-                                            [% END %]
-                                            <option value="other">Autres...</option>
-                                        </select>
-                                        <span id="other-reason-waiting" style="display:none;">
-                                            <input type="text" name="other_reason" id="other-reason-input-waiting" placeholder="Merci d'indiquer la raison ici..." size="31" />
-                                        </span>
-                                        <button type="submit" class="btn btn-default">
-                                            <i></i> Valider
-                                        </button>
-                                    </fieldset>
+                                                [% END %]
+                                                <option value="other">Autres...</option>
+                                            </select>
+                                            <span id="other-reason-wr-waiting" style="display:none;">
+                                                <input type="text" name="other_reason" id="other_reason-wr-input-waiting" placeholder="Merci d'indiquer la raison ici..." size="31" />
+                                            </span>
+                                            <button type="submit" class="btn btn-default">
+                                                <i></i> Valider
+                                            </button>
+                                        </fieldset>
+                                    </div> <!-- /#status-wr-waiting -->
                                 </form>
-                            [% ELSE %]
+                                [% ELSE %]
                                 <div class="dialog message">
                                     Il n'y a pas de demande disponible actuellement.
                                 </div>
-                            [% END %]
+                                [% END %]
                         [% END # /WRAPPER tab_panel %]
 
                         [% WRAPPER tab_panel tabname="warehouse-requests-canceled" %]
