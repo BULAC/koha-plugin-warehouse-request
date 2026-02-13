@@ -748,6 +748,11 @@
                 window.location.hash = "#"+reqtype;
             } else if(type === 'manual') {
                 var action = $("#status-wr-"+reqtype+" #action").find(":selected").val();
+                // BUGFIX: On force action= process pour la table pending ; il faudra traiter ça plus proprement 
+                if (reqtype === 'pending') {
+                    action = 'process';
+                }
+
                 var reason = "";
                 if($("#reason-wr-"+reqtype).length > 0) {
                     reason = $("#reason-wr-"+reqtype).find(":selected").val(); 
