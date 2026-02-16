@@ -279,12 +279,12 @@
                     </ul>
                 </div>
                 <div class="modal-footer">
-                    <form method="post" action="/receive.pl" autocomplete="off">
+                    <form method="post" action="/receive.pl" autocomplete="off" style="display: inline-block; gap: 10px;">
                         [% IF item.barcode %]
                             <input type="hidden" name="barcode" value="[% item.barcode | html %]" />
                         [% ELSE %]
                             <label for="missing_barcode">Entrez un code barre pour le document : </label>
-                            <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required /><br/>
+                            <input type="text" id="missing_barcode" name="missing_barcode" class="barcode focus" value="" required />
                         [% END %]
                         <input type="hidden" name="op" value="confirmed" />
                         <input type="hidden" name="wrid" value="[% wrid | html %]" />
