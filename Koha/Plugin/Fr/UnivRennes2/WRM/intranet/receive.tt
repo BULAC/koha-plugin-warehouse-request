@@ -108,6 +108,7 @@
                             <strong>([% patron.cardnumber | html %])</strong>,
                             à la banque [% reserve.desk.desk_name %].</p>
                             <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
+                                [% INCLUDE 'csrf-token.inc' %]
                                 <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
                                 <input type="hidden" name="itemnumber" value="[% item.itemnumber | html %]">
                                 <input type="hidden" name="fbr" value="[% Branches.GetLoggedInBranchcode | html %]">
@@ -126,12 +127,13 @@
                             <strong>([% patron.cardnumber | html %])</strong>.</p>
                         [% IF Koha.Preference('CanMarkHoldsToPullAsLost') != 'do_not_allow' %]
                             <form id="markaslost" name="markaslost" action="/cgi-bin/koha/circ/pendingreserves.pl?returnto=receive.pl" method="post">
+                                [% INCLUDE 'csrf-token.inc' %]
                                 <input type="hidden" name="reserve_id" value="[% reserve.reserve_id %]" />
                                 [% IF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow' %]
-                                    <input type="hidden" name="op" value="mark_as_lost" />
+                                    <input type="hidden" name="op" value="cud-mark_as_lost" />
                                     <input type="submit" value="Mark item as lost" />
                                 [% ELSIF Koha.Preference('CanMarkHoldsToPullAsLost') == 'allow_and_notify' %]
-                                    <input type="hidden" name="op" value="mark_as_lost_and_notify" />
+                                    <input type="hidden" name="op" value="cud-mark_as_lost_and_notify" />
                                     <input id="submitmarkaslost" type="submit" value="Déclarer le document manquant et notifier le lecteur" />
                                 [% END %]
                             </form>
