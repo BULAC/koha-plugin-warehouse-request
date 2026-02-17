@@ -1,15 +1,34 @@
-    [% USE KohaDates %]
-    [% USE raw %]
-    [% SET footerjs = 1 %]
-    [% INCLUDE 'doc-head-open.inc' %]
+[% USE raw %]
+[% USE Asset %]
+[% USE Koha %]
+[% SET footerjs = 1 %]
+[% INCLUDE 'doc-head-open.inc' %]
     <title>Koha: Warehouse Request Management Plugin: Configuration</title>
-    [% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE 'doc-head-close.inc' %]
+
 </head>
 <body>
     [% INCLUDE 'header.inc' %]
     [% INCLUDE 'cat-search.inc' %]
     
-    <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl"  data-i18n-key="BREADCRUMBS_HOME"></a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; <span data-i18n-key="PLUGIN_NAME"></span> - <span data-i18n-key="BREADCRUMBS_CONF"></span></div>
+
+        [% WRAPPER 'header.inc' %]
+            [% INCLUDE 'prefs-admin-search.inc' %]
+            [% END %]
+
+            [% WRAPPER 'sub-header.inc' %]
+            [% WRAPPER breadcrumbs %]
+                [% WRAPPER breadcrumb_item %]
+                    <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
+                [% END %]
+                [% WRAPPER breadcrumb_item %]
+                    <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3ABulac%3A%3APutAside&method=tool">[% TOKENS.PLUGIN_NAME | html %]</a>
+                [% END %]
+                [% WRAPPER breadcrumb_item bc_active= 1 %]
+                    <a href="#"><span data-i18n-key="PLUGIN_NAME"></span> - <span data-i18n-key="BREADCRUMBS_CONF"></span></a>
+                [% END %]
+            [% END %]
+        [% END %]
     
 </div>
     <div class="main container-fluid">
