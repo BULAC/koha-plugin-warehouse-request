@@ -13,24 +13,35 @@
 </head>
 
 <body id="circ_request-warehouse" class="circ">
-    [% INCLUDE 'header.inc' %]
-    [% INCLUDE 'circ-search.inc' %]
+    [% WRAPPER 'header.inc' %]
+        [% INCLUDE 'circ-search.inc' %]
+    [% END %]
 
-    <div id="breadcrumbs">
-        <a href="/cgi-bin/koha/mainpage.pl">Home</a>
-        &rsaquo;
-        <a href="/cgi-bin/koha/catalogue/search.pl">Catalog</a>
-        [% UNLESS blocking_error %]
-        &rsaquo;
-            [% INCLUDE 'biblio-title.inc' link = 1 %]
-        &rsaquo;
-        Request article
+
+    [% WRAPPER 'sub-header.inc' %]
+        [% WRAPPER breadcrumbs %]
+            [% WRAPPER breadcrumb_item %]
+               <a href="/cgi-bin/koha/catalogue/search.pl">Catalog</a>
+            [% END %]
+            [% WRAPPER breadcrumb_item %]
+               [% INCLUDE 'biblio-title.inc' link = 1 %]
+            [% END %]
+            [% WRAPPER breadcrumb_item %]
+               <a href="#"> Demande magasin</a>
+            [% END %]
         [% END %]
-    </div>
+    [% END %]
 
 [% INCLUDE 'blocking_errors.inc' %]
 <div class="main container-fluid">
     <div class="row">
+
+        <div class="col-sm-2 col-sm-pull-10">
+            <aside>
+                [% INCLUDE 'biblio-view-menu.inc' %]
+            </aside>
+        </div> <!-- /.col-sm-2.col-sm-pull-10 -->
+
         <div class="col-sm-10 col-sm-push-2">
             <main>
 	                
@@ -294,12 +305,6 @@
                     [% END %]
             </main>
         </div> <!-- /.col-sm-10.col-sm-push-2 -->
-
-        <div class="col-sm-2 col-sm-pull-10">
-            <aside>
-                [% INCLUDE 'biblio-view-menu.inc' %]
-            </aside>
-        </div> <!-- /.col-sm-2.col-sm-pull-10 -->
      </div> <!-- /.row -->
     
 [% MACRO jsinclude BLOCK %]    
