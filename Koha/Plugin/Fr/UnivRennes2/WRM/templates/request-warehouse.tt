@@ -26,7 +26,7 @@
             [% WRAPPER breadcrumb_item %]
                [% INCLUDE 'biblio-title.inc' link = 1 %]
             [% END %]
-            [% WRAPPER breadcrumb_item %]
+            [% WRAPPER breadcrumb_item active=1 %]
                <a href="#"> Demande magasin</a>
             [% END %]
         [% END %]
