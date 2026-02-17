@@ -602,6 +602,11 @@
             }
         }
         
+        $('#select-all-pending').click(function(e){
+            var isChecked = $(this).prop('checked');
+            $("#warehouse-requests-pending-table input[type='checkbox'][name='id']").prop('checked', isChecked);
+        });
+
         // $('#warehouse-request-tabs').tabs({
         //     // Correct table sizing for tables hidden in tabs
         //     // http://www.datatables.net/examples/api/tabs_and_scrolling.html
