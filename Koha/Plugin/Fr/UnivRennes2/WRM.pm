@@ -208,6 +208,24 @@ sub creation {
             }
         }
 
+        # Ajout d'une règle pour ne pas avoir deux fois le même exemplaire demandé 
+        my $active_request = Koha::WarehouseRequests->search({
+            itemnumber => $itemnumber,
+            status     => { -in => ['PENDING', 'PROCESSING', 'WAITING'] },
+        })->next;
+
+        if ($active_request) {
+            # Si c'est le même lecteur qui demande on refuse : 
+            if ($active_request->borrowernumber == $borrowernumber) {
+                $template->param( error => 'ALREADY_REQUESTED' );
+            # Si c'est un autre lecteur, on renvoie vers les réservations. 
+            } elsif ($active_request->status ne 'WAITING') {
+                $template->param( error => 'REDIRECT_TO_HOLD' );
+            }
+            $self->output_html( $template->output );
+            return;
+        }
+
         my $wr =  Koha::WarehouseRequest->new($params)->store();
     }
 
