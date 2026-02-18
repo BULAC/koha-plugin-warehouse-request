@@ -363,7 +363,7 @@
             }
 
             // Complete request
-            $('#circ_request-warehouse').on('click', '.complete-wr', function(e) {
+            $('#circ_request-warehouse').on('click', '.cancel-wr', function(e) {
                 e.preventDefault();
                 var id = $(this).data('id');
 

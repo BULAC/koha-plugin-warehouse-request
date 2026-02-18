@@ -91,7 +91,9 @@ sub tool {
     my $query = $self->{'cgi'};
     
     if ( defined $query->param('op') ) {
-        if ( $query->param('op') eq 'creation' ) {
+        if ( $query->param('op') eq 'cud-creation' ) {
+            $self->creation();
+        } elsif ( $query->param('op') eq 'creation' ) {
             $self->creation();
         } elsif ( $query->param('op') eq 'ticket' ) {
             $self->ticket();
