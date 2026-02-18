@@ -594,6 +594,15 @@
 
         var csrf_token = $('input[name="csrf_token"]').val();
         
+        // On change manuellement les referer vers set-library.pl
+        // Sinon le renvoi est complètement pété
+        $('a[href*="set-library.pl"]').each(function() {
+            $(this).attr('href', '/cgi-bin/koha/circ/set-library.pl?oldreferer=' 
+                + encodeURIComponent('/cgi-bin/koha/plugins/run.pl?class=Koha::Plugin::Fr::UnivRennes2::WRM&method=tool')
+            );
+        });
+
+
         var checkboxes = document.getElementsByTagName('input');
         
         for (var i=0; i<checkboxes.length; i++)  {
