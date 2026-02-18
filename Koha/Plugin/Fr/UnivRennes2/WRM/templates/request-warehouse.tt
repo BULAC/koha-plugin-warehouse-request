@@ -45,7 +45,7 @@
             [% INCLUDE 'messages.inc' %]
             [% INCLUDE 'blocking_errors.inc' %]
             [% IF error == 'ALREADY_REQUESTED' %]
-                <div class="dialog alert">
+                <div class="dialog message">
                     <h3>Demande déjà en cours</h3>
                     <p>
                         Ce lecteur a déjà une demande active pour cet exemplaire
