@@ -8,7 +8,7 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.count > 0) {
                     var wrlink = `<div class="pending-info" id="warehouse_requests_pending">
-                                    <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing">Demandes magasin</a>:
+                                    <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing">Demandes magasin en attente </a>:
                                     <span class="pending-number-link">`+ data.count + `</span>
                                 </div>`;
                     if ($('#area-pending').length > 0) {
@@ -37,12 +37,45 @@ $(document).ready(function() {
     }
     // Member tabs table injection
     if ($('#circ_circulation, #pat_moremember').length > 0) {
-        var tabs = $('#patronlists, #finesholdsissues').tabs();
-        tabs.find('ul li:last').before('<li><a href="#warehouse-requests" id="wrm-tab">? Demandes magasin</a></li>');
-        tabs.find('div:last').before('<div id="warehouse-requests">Chargement...</div>');
-        tabs.tabs("refresh");
+        
+        // Trouver le conteneur d'onglets Bootstrap
+        var $tabContainer = $('#patronlists, #finesholdsissues').first();
+        var $tabNav = $tabContainer.find('ul.nav-tabs').first();
+        var $tabContent = $tabContainer.find('.tab-content').first();
+
+        if ($tabNav.length === 0) {
+            // Fallback : chercher les nav-tabs globalement
+            $tabNav = $('ul.nav-tabs').first();
+            $tabContent = $('.tab-content').first();
+        }
+
+        // Créer le nouvel onglet (nav item)
+        var $newTab = $(
+            '<li class="nav-item">' +
+                '<a class="nav-link" id="wrm-tab" data-bs-toggle="tab" href="#warehouse-requests" role="tab">' +
+                    'Demandes magasin' +
+                '</a>' +
+            '</li>'
+        );
+
+        // Créer le panneau de contenu
+        var $newPane = $(
+            '<div class="tab-pane" id="warehouse-requests" role="tabpanel">Chargement...</div>'
+        );
+
+        // Injecter dans le DOM
+        $tabNav.append($newTab);
+        $tabContent.append($newPane);
+
+        // Charger les données au clic sur l'onglet
+        $newTab.find('a').on('shown.bs.tab', function() {
+            refreshWarehouseRequests();
+        });
+
+        // Charger immédiatement si besoin
         refreshWarehouseRequests();
     }
+
     // Catalog detail link
     let searchParams = new URLSearchParams(window.location.search);
     $('#catalog_detail #toolbar, #catalog_moredetail #toolbar').append('<div class="btn-group"><a id="placehold" class="btn btn-default " href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=creation&biblionumber=' + searchParams.get('biblionumber') + '"><i class="fa fa-file-text-o"></i> Demande magasin</a></div>');
