@@ -168,7 +168,7 @@ sub creation {
         };
         $criterias->{onloan} = undef
     }
-    my @items = Koha::Items->search($criterias);
+    my @items = Koha::Items->search($criterias)->as_list;
     my $patron =
         $patron_id         ? Koha::Patrons->find($patron_id)
       : $patron_cardnumber ? Koha::Patrons->find( { cardnumber => $patron_cardnumber } )
