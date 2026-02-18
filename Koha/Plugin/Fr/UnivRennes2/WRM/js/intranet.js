@@ -123,7 +123,7 @@ function refreshWarehouseRequests() {
                                 </thead>
                             `);
                 for (var i = 0; i < data.length; i++) {
-                    console.log(data[i]);
+                    // console.log(data[i]);
                     var cd = new Date(data[i].created_on);
                     var rd = new Date(data[i].deadline);
                     var infoBlock = '<div><a class="strong" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=' + data[i].biblionumber + '" title="' + data[i].biblio.title + '">' + data[i].biblio.title + '</a></div>';
