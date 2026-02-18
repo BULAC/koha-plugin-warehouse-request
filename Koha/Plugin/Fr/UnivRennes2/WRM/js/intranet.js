@@ -161,7 +161,7 @@ function refreshWarehouseRequests() {
                         cnt++;
                     }
                 }
-                $('#wrm-tab').text(cnt + ' Demandes magasin');
+                $('#wrm-tab').text('Demandes magasin('+ cnt +')');
                 $('#warehouse-requests table').dataTable($.extend(true, {}, dataTablesDefaults, {
                     "sDom": 't',
                     "aaSorting": [[0, "desc"]],
