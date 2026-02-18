@@ -217,7 +217,11 @@ sub creation {
         if ($active_request) {
             # Si c'est le même lecteur qui demande on refuse : 
             if ($active_request->borrowernumber == $borrowernumber) {
-                $template->param( error => 'ALREADY_REQUESTED' );
+                $template->param(
+                    error              => 'ALREADY_REQUESTED',
+                    error_request_id   => $active_request->id,
+                    error_request_date => output_pref({ dt => dt_from_string($active_request->date_created), dateonly => 1 }),
+                );
             # Si c'est un autre lecteur, on renvoie vers les réservations. 
             } elsif ($active_request->status ne 'WAITING') {
                 $template->param( error => 'REDIRECT_TO_HOLD' );
