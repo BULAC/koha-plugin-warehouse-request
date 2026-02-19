@@ -76,7 +76,7 @@ my $days_to_keep = C4::Context->dbh->selectrow_array(
     "SELECT plugin_value FROM plugin_data 
      WHERE plugin_class = 'Koha::Plugin::Fr::UnivRennes2::WRM' 
      AND plugin_key = 'days_to_keep'"
-) // 5;
+) // 7;
 
 my $error;
 my $barcode = $query->param("barcode") // '';
