@@ -4,93 +4,130 @@ let wr_borrowernumber;
 $(document).ready(function() {
     if ($('#opac-user').length > 0) {
         wr_borrowernumber = $(".loggedinusername").data('borrowernumber');
-        var tabs = $('#opac-user-views').tabs();
-        var ul = tabs.find('ul');
-        $('<li><a href="#warehouse-requests" id="wrm-tab">Demandes de document (?)</a></li>').appendTo(ul);
-        $('<div id="warehouse-requests">Chargement...</div>').appendTo(tabs);
-        tabs.tabs("refresh");
-        refreshWarehouseRequests(wr_borrowernumber);
+
+        // Ajout de l'onglet dans la nav Bootstrap
+        $('ul.nav-tabs').append(
+            '<li class="nav-item">' +
+                '<a class="nav-link" id="wrm-tab" href="#warehouse-requests" data-bs-toggle="tab">' +
+                    'Demandes de document (?)' +
+                '</a>' +
+            '</li>'
+        );
+
+        // Ajout du panneau de contenu
+        $('.tab-content').append(
+            '<div class="tab-pane fade" id="warehouse-requests">Chargement...</div>'
+        );
+
+        // Chargement au clic sur l'onglet
+        $('#wrm-tab').on('shown.bs.tab', function() {
+            refreshWarehouseRequests(wr_borrowernumber);
+        });
     }
 });
 
 function refreshWarehouseRequests(borrowernumber) {
-    $.get(`/api/v1/contrib/wrm/patrons/${borrowernumber}/requests`, function (data) {
+    if (!borrowernumber) {
+        console.error('WRM : borrowernumber non défini');
+        return;
+    }
+
+    $.get('/api/v1/contrib/wrm/patrons/' + borrowernumber + '/requests', function(data) {
         var cnt = 0;
-        var result = $('#warehouse-requests').empty();
-        result.append(`
-                    <table class="table table-bordered table-striped dataTable no-footer" role="grid">
-                        <tbody>
-                        </tbody>
-                    </table>
-                    `);
+        var container = $('#warehouse-requests').empty();
+
         if (data.length > 0) {
-            result.find('table').prepend(`
-                            <caption>Demandes de document (`+ data.length + ` en tout) </caption>
-                            <thead>
-                                <tr>
-                                    <th>Informations</th>
-                                    <th>Demand&eacute; le</th>
-                                    <th>A retirer avant le</th>
-                                    <th>Statut</th>
-                                    <th>Site de retrait</th>
-                                </tr>
-                            </thead>
-                        `);
-            data.sort(function (a, b) { return b.id - a.id });
+            var table = $(
+                '<table class="table table-bordered table-striped">' +
+                    '<thead>' +
+                        '<tr>' +
+                            '<th>Document</th>' +
+                            '<th>Date de demande</th>' +
+                            '<th>Date souhaitée</th>' +
+                            '<th>Statut</th>' +
+                            '<th>Bibliothèque</th>' +
+                            '<th>Action</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody></tbody>' +
+                '</table>'
+            );
+
             for (var i = 0; i < data.length; i++) {
-                console.log(data[i]);
-                var cd = new Date(data[i].created_on);
-                var rd = new Date(data[i].deadline);
-                var infoBlock = '<a href="/bib/' + data[i].biblionumber + '" title="' + data[i].biblio.title + '">' + data[i].biblio.title + '</a> ' + data[i].biblio.author + ' <span class="label">(Seulement ' + data[i].item.itemcallnumber + ')</span>';
+                var item = data[i];
+                var cd = new Date(item.creationdate);
+                var rd = new Date(item.requesteddate);
+
+                var infoBlock = item.title || '';
                 var extInfoBlock = [];
-                if (data[i].volume != '' && data[i].volume != undefined) extInfoBlock.push('<span class="label">Volume(s) : ' + data[i].volume + '</span>');
-                if (data[i].issue != '' && data[i].issue != undefined) extInfoBlock.push('<span class="label">Numéro(s) : ' + data[i].issue + '</span>');
-                if (data[i].date != '' && data[i].date != undefined) extInfoBlock.push('<span class="label">Date : ' + data[i].date + '</span>');
+                if (item.volume) extInfoBlock.push('<span class="label">Volume(s) : ' + item.volume + '</span>');
+                if (item.issue)  extInfoBlock.push('<span class="label">Numéro(s) : ' + item.issue + '</span>');
+                if (item.date)   extInfoBlock.push('<span class="label">Date : ' + item.date + '</span>');
                 if (extInfoBlock.length > 0) infoBlock += '<br />' + extInfoBlock.join(' | ');
-                result.find('tbody').append(`
-                                <tr>
-                                    <td>`+ infoBlock + `</td>
-                                    <td>`+ cd.toLocaleDateString() + ' ' + cd.toLocaleTimeString() + `</td>
-                                    <td>`+ rd.toLocaleDateString() + `</td>
-                                    <td class="nowrap">`+ colorStatus(data[i].statusstr, data[i].status) + (data[i].status == 'CANCELED' ? '<div class="reason">' + data[i].notes + '</div>' : '') + `</td>
-                                    <td>`+ data[i].branchname + `</td>
-                                </tr>
-                            `);
-                if (['CANCELED', 'COMPLETED'].indexOf(data[i].status) < 0) {
+
+                var cancelBtn = '';
+                if (['CANCELED', 'COMPLETED'].indexOf(item.status) < 0) {
+                    cancelBtn = '<button class="btn btn-danger btn-sm cancel-wr" data-id="' + item.id + '">Annuler</button>';
                     cnt++;
                 }
-                $('#wrm-tab').text('Demandes de document (' + cnt + ')');
+
+                table.find('tbody').append(
+                    '<tr>' +
+                        '<td>' + infoBlock + '</td>' +
+                        '<td>' + cd.toLocaleDateString() + ' ' + cd.toLocaleTimeString() + '</td>' +
+                        '<td>' + rd.toLocaleDateString() + '</td>' +
+                        '<td>' + colorStatus(item.statusstr, item.status) + '</td>' +
+                        '<td>' + item.branchname + '</td>' +
+                        '<td>' + cancelBtn + '</td>' +
+                    '</tr>'
+                );
             }
-            $('.cancel-wr').click(function () {
+
+            container.append(table);
+
+            // Délégation d'événement pour les boutons d'annulation
+            container.on('click', '.cancel-wr', function() {
                 if (confirm('Êtes-vous sûr(e) de vouloir annuler votre demande ?')) {
-                    var id = $(this).attr('data-id');
-                    $.post("/api/v1/contrib/wrm/cancel/" + id, function (data) {
+                    var id = $(this).data('id');
+                    $.post('/api/v1/contrib/wrm/cancel/' + id, function() {
                         alert('Votre demande a été annulée avec succès');
-                        refreshWarehouseRequests();
+                        refreshWarehouseRequests(borrowernumber);
+                    }).fail(function() {
+                        alert('Erreur lors de l\'annulation. Veuillez réessayer.');
                     });
                 }
             });
+
         } else {
-            result.find('tbody').append('<tr><td>Aucune demande en cours</td></tr>');
+            container.append('<p>Aucune demande en cours</p>');
         }
+
+        // Mise à jour du compteur dans l'onglet
+        $('#wrm-tab').text('Demandes de document (' + cnt + ')');
+
+    }).fail(function(xhr) {
+        console.error('WRM API error:', xhr.status, xhr.responseText);
+        $('#warehouse-requests').html(
+            '<p class="alert alert-danger">Erreur lors du chargement des demandes (HTTP ' + xhr.status + ').</p>'
+        );
     });
 }
 
 function colorStatus(str, code) {
-    var cls = "label";
+    var cls = "badge";
     switch (code) {
         case "PENDING":
         case "PROCESSING":
-            cls += " label-warning";
+            cls += " bg-warning";
             break;
         case "WAITING":
-            cls += " label-success";
+            cls += " bg-success";
             break;
         case "COMPLETED":
-            cls += " bg-gray text-white";
+            cls += " bg-secondary";
             break;
         case "CANCELED":
-            cls += " label-danger";
+            cls += " bg-danger";
             break;
     }
     return '<span class="' + cls + '">' + str + '</span>';
