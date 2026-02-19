@@ -67,15 +67,17 @@ my $desk_id = C4::Context->userenv->{"desk_id"} // '';
 print $query->redirect("/cgi-bin/koha/circ/set-library.pl?oldreferer=/receive.pl")
   unless ($desk_id);
 
+
+my $desk = Koha::Desks->find($desk_id);
+
 # On va chercher la valeur days to keep dans WRM
 # BUGFIX : voir si on peut faire plus propre comme dans WRM.pm
 my $days_to_keep = C4::Context->dbh->selectrow_array(
     "SELECT plugin_value FROM plugin_data 
      WHERE plugin_class = 'Koha::Plugin::Fr::UnivRennes2::WRM' 
      AND plugin_key = 'days_to_keep'"
-)
+) // 5;
 
-my $desk = Koha::Desks->find($desk_id);
 my $error;
 my $barcode = $query->param("barcode") // '';
 $barcode =~ s/^\s*|\s*$//g;
