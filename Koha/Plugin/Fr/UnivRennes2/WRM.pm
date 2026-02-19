@@ -21,6 +21,7 @@ use C4::Koha qw(GetAuthorisedValues);
 use C4::Letters;
 use C4::Members;
 use C4::Installer qw(TableExists);
+use C4::Reserves qw(AddReserve);
 use Koha::AuthorisedValue;
 use Koha::AuthorisedValues;
 use Koha::AuthorisedValueCategory;
@@ -224,10 +225,25 @@ sub creation {
                 );
             # Si c'est un autre lecteur, on renvoie vers les réservations. 
             } elsif ($active_request->status ne 'WAITING') {
-                $template->param( error => 'REDIRECT_TO_HOLD' );
+                my $reserve_id = eval {
+                    AddReserve({
+                        branchcode     => $branchcode,
+                        borrowernumber => $borrowernumber,
+                        biblionumber   => $biblio->biblionumber,  # <-- correction ici
+                        itemnumber     => $itemnumber,
+                        notes          => 'Demande de magasin impossible, document déjà en consultation par un autre lecteur.',
+                    });
+                };
+                if ($@) {
+                    warn "AddReserve failed: $@";
+                    $template->param( error => 'HOLD_FAILED' );
+                } else {
+                    $template->param( error => 'REDIRECT_TO_HOLD' );
+                }
             }
-            $self->output_html( $template->output );
-            return;
+
+        $self->output_html( $template->output );
+        return;
         }
 
         my $wr =  Koha::WarehouseRequest->new($params)->store();

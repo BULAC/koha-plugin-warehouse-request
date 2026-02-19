@@ -53,6 +53,14 @@
                         Aucune nouvelle demande n'a été créée.
                     </p>
                 </div>
+            [% ELSIF error == 'REDIRECT_TO_HOLD' %]
+                <div class="dialog message">
+                    <h3>Demande déjà en cours</h3>
+                    <p>
+                        Ce document est déjà en consultation par un autre lecteur. 
+                        Une réservation a été posée sur le document à la place.
+                    </p>
+                </div>
             [% END %]
             
             <h1>Demande magasin depuis <a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=[% biblio.id %]">[% biblio.title | html %]</a></h1>

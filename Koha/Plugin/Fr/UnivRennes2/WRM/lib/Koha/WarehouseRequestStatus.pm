@@ -67,8 +67,8 @@ sub GetStatusLabel {
         'PENDING'    => 'En attente',
         'PROCESSING' => 'En traitement',
         'WAITING'    => 'Disponible',
-        'COMPLETED'  => 'Termin&eacute;e',
-        'CANCELED'   => 'Annul&eacute;e'
+        'COMPLETED'  => 'Terminée',
+        'CANCELED'   => 'Annulée'
     );
     return $labels{$status};
 }
