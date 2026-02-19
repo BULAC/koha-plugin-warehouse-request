@@ -64,7 +64,7 @@ my $sessionID = $query->cookie("CGISESSID");
 my $session = get_session($sessionID);
 my $desk_id = C4::Context->userenv->{"desk_id"} // '';
 
-print $query->redirect("/cgi-bin/koha/circ/set-library.pl?referer=/receive.pl")
+print $query->redirect("/cgi-bin/koha/circ/set-library.pl?oldreferer=/receive.pl")
   unless ($desk_id);
 
 my $desk = Koha::Desks->find($desk_id);
