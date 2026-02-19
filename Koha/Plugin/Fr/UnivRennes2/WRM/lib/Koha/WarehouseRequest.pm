@@ -90,9 +90,11 @@ sub wait {
 =cut
 
 sub complete {
-    my ($self) = @_;
-
+    my ($self, $days_to_keep) = @_;
+    my $deadline = $self->calculate_deadline( $days_to_keep );
+    
     $self->status(Koha::WarehouseRequestStatus->Completed());
+    $self->deadline( $deadline );
     $self->store();
     return $self;
 }

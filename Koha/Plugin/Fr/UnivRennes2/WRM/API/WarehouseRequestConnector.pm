@@ -62,7 +62,7 @@ sub update_status {
                 use Koha::DateUtils qw(output_pref);
                 my $canitembereserved = CanItemBeReserved( $wr->borrower->borrowernumber, $wr->item->itemnumber );
                 if ($canitembereserved->{'status'} eq 'OK') {
-                    $wr = $wr->complete();
+                    $wr = $wr->complete( $plugin->get_days_to_keep );
                     my $resid = AddReserve({
                         branchcode       => $wr->borrower->branchcode,
                         borrowernumber   => $wr->borrower->borrowernumber,
@@ -82,7 +82,7 @@ sub update_status {
             $wr = $wr->process();
         }
         elsif ( $action eq 'complete' ) {
-            $wr = $wr->complete();
+            $wr = $wr->complete( $plugin->get_days_to_keep );
         }
         return $c->render(
             status => 200,
