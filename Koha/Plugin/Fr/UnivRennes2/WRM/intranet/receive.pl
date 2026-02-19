@@ -67,6 +67,14 @@ my $desk_id = C4::Context->userenv->{"desk_id"} // '';
 print $query->redirect("/cgi-bin/koha/circ/set-library.pl?oldreferer=/receive.pl")
   unless ($desk_id);
 
+# On va chercher la valeur days to keep dans WRM
+# BUGFIX : voir si on peut faire plus propre comme dans WRM.pm
+my $days_to_keep = C4::Context->dbh->selectrow_array(
+    "SELECT plugin_value FROM plugin_data 
+     WHERE plugin_class = 'Koha::Plugin::Fr::UnivRennes2::WRM' 
+     AND plugin_key = 'days_to_keep'"
+)
+
 my $desk = Koha::Desks->find($desk_id);
 my $error;
 my $barcode = $query->param("barcode") // '';
@@ -145,7 +153,7 @@ if ($barcode_type eq "item" and $op eq "confirm") {
     my $patron = Koha::Patrons->find($wr->borrowernumber);
     $item->barcode($missing_barcode)->store()
       if ($missing_barcode and ! $item->barcode);
-    $wr = $wr->complete();
+    $wr = $wr->complete( $days_to_keep );
     my $resid = AddReserve({
                             branchcode       => $wr->borrower->branchcode,
                             borrowernumber   => $wr->borrower->borrowernumber,
@@ -172,7 +180,7 @@ if ($barcode_type eq "item" and $op eq "confirm") {
     my $item;
     $item = Koha::Items->find( $wr->itemnumber );
     my $patron = Koha::Patrons->find($wr->borrowernumber);
-    $wr = $wr->complete();
+    $wr = $wr->complete( $days_to_keep );
     my $resid = AddReserve({
                             branchcode       => $wr->borrower->branchcode,
                             borrowernumber   => $wr->borrower->borrowernumber,
