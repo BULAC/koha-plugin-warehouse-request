@@ -681,6 +681,7 @@
                 }
             },
             "x-koha-authorization": {
+                "allow-owner": true,
                 "permissions": {
                     "catalogue": "1"
                 }
