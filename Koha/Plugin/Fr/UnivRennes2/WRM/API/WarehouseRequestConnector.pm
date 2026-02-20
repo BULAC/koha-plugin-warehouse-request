@@ -15,6 +15,7 @@ package Koha::Plugin::Fr::UnivRennes2::WRM::API::WarehouseRequestConnector;
 # with Koha; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+use utf8;
 use Modern::Perl;
 
 use CGI;

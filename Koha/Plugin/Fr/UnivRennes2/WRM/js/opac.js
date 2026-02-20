@@ -39,6 +39,7 @@ function refreshWarehouseRequests(borrowernumber) {
         url: '/api/v1/contrib/wrm/patrons/' + borrowernumber + '/requests',
         method: 'GET',
         headers: {
+            'Accept': 'application/json',
             'x-csrf-token': csrfToken
         },
         success: function(data) {
