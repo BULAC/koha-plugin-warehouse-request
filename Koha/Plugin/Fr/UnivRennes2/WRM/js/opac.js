@@ -4,6 +4,7 @@ let wr_borrowernumber;
 $(document).ready(function() {
     if ($('#opac-user').length > 0) {
         wr_borrowernumber = $(".loggedinusername").data('borrowernumber');
+        var wrm_loaded = false;
 
         // Ajout de l'onglet dans la nav Bootstrap
         $('ul.nav-tabs').append(
@@ -21,12 +22,22 @@ $(document).ready(function() {
 
         // Chargement au clic sur l'onglet
         $('#wrm-tab').on('shown.bs.tab', function() {
+            if (!wrm_loaded) {
             refreshWarehouseRequests(wr_borrowernumber);
-        });
+        }
+        wrm_loaded = false; 
+    });
+
+    refreshWarehouseRequests(wr_borrowernumber, function() {
+        wrm_loaded = true;
+    });
+
     }
 });
 
-function refreshWarehouseRequests(borrowernumber) {
+refreshWarehouseRequests();
+
+function refreshWarehouseRequests(borrowernumber, callback) {
     if (!borrowernumber) {
         console.error('WRM : borrowernumber non défini');
         return;
@@ -56,7 +67,7 @@ function refreshWarehouseRequests(borrowernumber) {
                                 '<th>Date souhaitée</th>' +
                                 '<th>Statut</th>' +
                                 '<th>Bibliothèque</th>' +
-                                '<th>Action</th>' +
+                                //'<th>Action</th>' +
                             '</tr>' +
                         '</thead>' +
                         '<tbody></tbody>' +
@@ -90,7 +101,7 @@ function refreshWarehouseRequests(borrowernumber) {
                             '<td>' + deadlineStr + '</td>' +
                             '<td>' + colorStatus(item.statusstr, item.status) + '</td>' +
                             '<td>' + (item.branchname || '') + '</td>' +
-                            '<td>' + cancelBtn + '</td>' +
+                            //'<td>' + cancelBtn + '</td>' +
                         '</tr>'
                     );
                 }
@@ -117,15 +128,16 @@ function refreshWarehouseRequests(borrowernumber) {
                                 alert('Erreur lors de l\'annulation (HTTP ' + xhr.status + '). Veuillez réessayer.');
                             }
                         });
+                        
+                        // Mise à jour du compteur dans l'onglet
+                        $('#wrm-tab').text('Demandes de document (' + cnt + ')');
                     }
                 });
 
             } else {
                 container.append('<p>Aucune demande en cours</p>');
+                $('#wrm-tab').text('Demandes de document (0)');
             }
-
-            // Mise à jour du compteur dans l'onglet
-            $('#wrm-tab').text('Demandes de document (' + cnt + ')');
         },
         error: function(xhr) {
             console.error('WRM API error:', xhr.status, xhr.responseText);

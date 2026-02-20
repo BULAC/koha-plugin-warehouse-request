@@ -35,6 +35,39 @@ $(document).ready(function() {
             }
         }
     }
+
+    // Nav menu injection (circ)
+    if ($('#navmenulist').length > 0) {
+        var $wrmSection = $(`
+            <h5>Demandes des adhérents</h5>
+            <ul>
+                <li>
+                    <a href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing">
+                        Demandes magasin
+                    </a>
+                </li>
+                <li>
+                    <a href="/receive.pl">
+                        Réception
+                    </a>
+                </li>
+            </ul>
+        `);
+
+        // On injecte après la section "Réservations" si elle existe,
+        // sinon on ajoute à la fin du premier col-md-12
+        var $reservationsHeader = $('#navmenulist h5').filter(function() {
+            return $(this).text().trim() === 'Circulation';
+        });
+
+        if ($reservationsHeader.length > 0) {
+            $reservationsHeader.next('ul').after($wrmSection);
+        } else {
+            $('#navmenulist .col-md-12').first().append($wrmSection);
+        }
+    }
+
+
     // Member tabs table injection
     if ($('#circ_circulation, #pat_moremember').length > 0) {
         
