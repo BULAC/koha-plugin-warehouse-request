@@ -35,7 +35,6 @@ $(document).ready(function() {
     }
 });
 
-refreshWarehouseRequests();
 
 function refreshWarehouseRequests(borrowernumber, callback) {
     if (!borrowernumber) {
@@ -128,9 +127,6 @@ function refreshWarehouseRequests(borrowernumber, callback) {
                                 alert('Erreur lors de l\'annulation (HTTP ' + xhr.status + '). Veuillez réessayer.');
                             }
                         });
-                        
-                        // Mise à jour du compteur dans l'onglet
-                        $('#wrm-tab').text('Demandes de document (' + cnt + ')');
                     }
                 });
 
@@ -138,12 +134,21 @@ function refreshWarehouseRequests(borrowernumber, callback) {
                 container.append('<p>Aucune demande en cours</p>');
                 $('#wrm-tab').text('Demandes de document (0)');
             }
+
+            $('#wrm-tab').text('Demandes de document (' + cnt + ')');
+
+            if (typeof callback === 'function') {
+                callback();
+            }
         },
         error: function(xhr) {
             console.error('WRM API error:', xhr.status, xhr.responseText);
             $('#warehouse-requests').html(
                 '<p class="alert alert-danger">Erreur lors du chargement des demandes (HTTP ' + xhr.status + ').</p>'
             );
+            if (typeof callback === 'function') {
+                callback();
+            }
         }
     });
 }
