@@ -555,28 +555,35 @@ sub list {
 
     my $c = shift->openapi->valid_input or return;
     
-    my $borrowernumber = $c->validation->param('borrowernumber');
+
+    my $patron_id = $c->validation->param('patron_id');
     my $status = $c->validation->param('request_status');
-    my $params = {
-        archived => 0
-    };
-    if ( defined $status && $status ne '' ) {
-        $params->{status} = $status;
-    } else {
-        unless ($borrowernumber) {
-            my $user = $c->stash('koha.user');
-            $borrowernumber = $user->borrowernumber;
-        }
-        if ( defined $borrowernumber && $borrowernumber ne '' ) {
-            $params->{borrowernumber} = $borrowernumber;
-        } else {
+
+    my $current_user = $c->stash('koha.user');
+    unless ($current_user) {
+        return $c->render(
+            status  => 403,
+            openapi => { error => "Authentification requise." }
+        );
+    }
+
+    if ( $current_user->borrowernumber != $patron_id ) {
+        # Sauf si c'est un staff avec la permission plugins > tool
+        unless ( $current_user->has_permission({ plugins => 'tool' }) ) {
             return $c->render(
-                status => 404,
-                openapi => {
-                    error => "Utilisateur non trouvé"
-                }
+                status  => 403,
+                openapi => { error => "Vous ne pouvez consulter que vos propres demandes." }
             );
         }
+    }
+
+    my $params = {
+        borrowernumber => $patron_id,
+        archived => 0
+    };
+
+    if ( defined $status && $status ne '' ) {
+        $params->{status} = $status;
     }
     
     my $requests = Koha::WarehouseRequests->search($params);

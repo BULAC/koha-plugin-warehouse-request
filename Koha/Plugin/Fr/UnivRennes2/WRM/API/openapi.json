@@ -477,7 +477,8 @@
                 }
             },
             "x-koha-authorization": {
-                "allow-owner": true
+                "allow-owner": true,
+                "permissions" : {}
             }
         }
     },
