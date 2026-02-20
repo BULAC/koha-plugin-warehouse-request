@@ -438,7 +438,7 @@
             "operationId": "listSelfWR",
             "tags": ["warehouserequests"],
             "produces": [
-                "application/json; charset=utf-8"
+                "application/json"
             ],
             "parameters": [{
                 "name": "patron_id",
@@ -488,7 +488,7 @@
             "operationId": "listUserWR",
             "tags": ["warehouserequests"],
             "produces": [
-                "application/json; charset=utf-8"
+                "application/json"
             ],
             "parameters": [{
                 "name": "borrowernumber",
@@ -539,7 +539,7 @@
             "operationId": "listWRbyStatus",
             "tags": ["warehouserequests"],
             "produces": [
-                "application/json; charset=utf-8"
+                "application/json"
             ],
             "parameters": [{
                 "name": "request_status",
@@ -643,7 +643,7 @@
             "operationId": "countWR",
             "tags": ["warehouserequests"],
             "produces": [
-                "application/json; charset=utf-8"
+                "application/json"
             ],
             "parameters": [{
                 "name": "biblionumber",
