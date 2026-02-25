@@ -431,7 +431,8 @@ sub opac_request {
     my $branchcode   = $c->validation->param('branchcode');
     
     my $item;
-    my $canitembereserved = CanItemBeReserved( $user->borrowernumber, $itemnumber );
+    my $item_for_check = Koha::Items->find($itemnumber);
+    my $canitembereserved = CanItemBeReserved( $user->borrowernumber, $item_for_check );
     unless ($canitembereserved->{status} eq 'OK') {
         return $c->render(
             status => 200,
