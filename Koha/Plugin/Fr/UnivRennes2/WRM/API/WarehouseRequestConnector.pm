@@ -432,7 +432,7 @@ sub opac_request {
     
     my $item;
     my $item_for_check = Koha::Items->find($itemnumber);
-    my $canitembereserved = CanItemBeReserved( $user->borrowernumber, $item_for_check );
+    my $canitembereserved = CanItemBeReserved( $user, $item_for_check );
     unless ($canitembereserved->{status} eq 'OK') {
         return $c->render(
             status => 200,
