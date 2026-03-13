@@ -12,6 +12,7 @@ use CGI qw(-utf8);
 use Cwd qw(abs_path);
 use Encode qw(decode);
 use File::Slurp qw(read_file);
+use Try::Tiny;
 use Module::Metadata;
 
 use C4::Auth;
