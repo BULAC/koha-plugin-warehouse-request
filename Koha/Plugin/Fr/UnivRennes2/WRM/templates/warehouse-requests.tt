@@ -705,9 +705,8 @@
                 e.preventDefault();
                 var id = $(this).data('id');
                 //PrintSlip('/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=ticket&id='+id);
-                //PrintSlip('/cgi-bin/koha/circ/printslip.pl?reserves='+id);
                 var baseURL = window.location.origin;
-                var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3ABulac%3A%3ABulacReports&method=tool&sub=printwrm&id=' + id;
+                var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=printslip&id=' + id;
                 PrintSlip(fullURL);
                 return false;
             });
@@ -805,7 +804,7 @@
                 });
                 if (action === 'process') {
                     var baseURL = window.location.origin;
-                    var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3ABulac%3A%3ABulacReports&method=tool&sub=printwrm&id=' + reqids;
+                    var fullURL = baseURL + '/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool&op=printslip&id=' + reqids;
                     window.open(fullURL);
                     //window.open('/cgi-bin/koha/circ/printslip.pl?reserves=' + reqids);                    
                     }

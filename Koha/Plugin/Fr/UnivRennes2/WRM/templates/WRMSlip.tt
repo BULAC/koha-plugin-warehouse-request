@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        @page { size: 210mm 148mm; margin: 0; } /* A5 en paysage */
+        
+        /* .cadre {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1150px;
+            height: 776px; 
+            border: 1px solid black;
+            box-sizing: border-box;
+        } */
+
+        html {
+            position: absolute;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            width: 1150px;
+            height: 810px;
+            box-sizing: border-box;
+            /* border: 1px solid black; */
+            overflow: hidden;
+            
+        }
+        
+        body {
+            position: absolute;
+            top: 30px;
+            bottom: 30px;
+            right: 30px;
+            left: 30px;
+            width: 1090px; 
+            height: 750px;
+            /* overflow: hidden; */
+        }
+        
+        .container {
+            display: flex;
+            left: 50px;
+            right: 50px;
+            bottom: 30px; 
+            width: 100%;
+            height: 100%;
+        }
+        
+        .column {
+            width: calc(46% - .5mm);
+            margin-right: 100px;
+            height: 100%;
+            position: relative;
+        }
+
+        .column:last-child{
+            margin-right:0;              /* pas d’espace après le dernier */
+        }
+        
+        /* Styles communs */
+        .center { text-align: center; }
+        .left { text-align: left; }
+        .bold { font-weight: bold; }
+        .xtra-large {font-size: 26pt;}
+        .large { font-size: 22pt; }
+        .medium { font-size: 14pt; }
+        .small { font-size: 8pt; }
+        .mag-font-size { font-size: 18pt;}
+        
+        /* Colonne de gauche - Header */
+        .left-header {
+            height: 15mm;
+            position: relative;
+            margin-bottom: 3mm;
+        }
+        
+        .name-section {
+            position: absolute;
+            top: -12px;
+            left: 0;
+        }
+        
+        .location {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+        
+        .storage {
+            position: absolute;
+            top: 10mm;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* Cadre principal - Table structure */
+        .main-frame {
+            border: 1px solid #000;
+            height: calc(100% - 35mm);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .layer {
+            border-bottom: 1px solid #000;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .layer:last-child {
+            border-bottom: none;
+        }
+        
+        .layer1, .layer2, .layer3, .layer4, .layer5 {
+            position:relative;                
+            display:flex;
+            flex-direction:column;
+            align-items:center;   
+            justify-content:center;            
+            }
+        
+
+        .layer1 .label,
+        .layer2 .label,
+        .layer3 .label,
+        .layer4 .label,
+        .layer5 .label {
+            position:absolute;
+            top:1mm;
+            left:0;
+            width:100%;
+            text-align:center;
+        }
+        
+        .layer1 {
+            height: 12mm;
+        }
+        
+        .layer2 {
+            height: 10mm;
+        }
+        
+        .layer3 {
+            height: 15mm;
+        }
+        
+        .layer4 {
+            height: 25mm;
+            flex-direction: row;
+            padding: 0;
+        }
+        
+        .layer5 {
+            height: 20mm;
+        }
+        
+        .layer6 {
+            flex: 1;
+            flex-direction: row;
+            padding: 0;
+        }
+        
+        .half-width {
+            position: relative;
+            flex: 1;
+            border-right: 1px solid #000;
+            padding-top: 2mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .half-width:last-child {
+            border-right: none;
+        }
+        
+        .half-width.left-align {
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+        
+        .half-width .label{
+            position:absolute;
+            top:-7mm;
+            left:0;
+            width:100%;
+            text-align:center;
+        }
+
+        .observations-space, .remarks-space {
+            height: 100%;
+            width: 100%;
+            margin-top: 2mm;
+        }
+        
+        .status-list {
+            font-size: 8pt;
+            line-height: 1.2;
+            width: 100%;
+        }
+        
+        .status-list ul {
+            list-style: none;
+            margin: 0;
+            padding: 10px;
+            font-size: 10pt;
+        }
+        
+        .status-list li {
+            padding: 2px;
+        }
+
+        .status-list li:before {
+            content: "☐ ";
+        }        
+
+        
+        .barcode-area {
+            height: calc(100%-20px);
+            width: 98%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            /* font-size: 8pt; */
+            color: #666;
+            /* border: 1px dashed #999; */
+        }
+
+        .barcode-number {
+            text-align: center;
+            font-size: 10pt;
+            margin-top: 25px;
+            flex-shrink: 0;
+        }
+        
+        /* Texte le long de la bordure gauche */
+        .left-border-text {
+            position: absolute;
+            left: -224px;
+            top: 58%;
+            transform: rotate(-90deg) translateY(-200%);
+            transform-origin: center center;
+            font-size: 8pt;
+            white-space: nowrap;
+        }
+        
+        /* Colonne de droite - Header */
+        .right-header {
+            height: 15mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 3mm;
+        }
+        
+        /* Date en bas à droite */
+        .bottom-date {
+            position: flex;
+            bottom: 2mm;
+            left: 2mm;
+            font-size: 8pt;
+        }
+    </style>
+</head>
+<body>
+    <!-- <div class="cadre"></div> -->
+    <div class="container">
+        <!-- COLONNE DE GAUCHE -->
+        <div class="column">
+            <div class="left-header">
+                <div class="name-section">
+                    <div class="bold xtra-large">[% surname %]</div>
+                    <div class="bold medium">[% firstname %]</div>
+                </div>
+                <div class="location bold">[% desk %]</div>
+                <div class="storage center bold mag-font-size">[% location %]</div>
+            </div>
+            
+            <div class="main-frame">
+                <!-- Layer 1 -->
+                <div class="layer layer1">
+                    <div class="small label">Demandé le :</div>
+                    <div class="medium">[% reservedate.split(' ').first %]</div>
+                </div>
+                
+                <!-- Layer 2 -->
+                <div class="layer layer2">
+                    <div class="bold large">[% itemcallnumber %]</div>
+                </div>
+                
+                <!-- Layer 3 -->
+                <div class="layer layer3">
+                    <div class="small label">Titre</div>
+                    <div class="medium" style="font-size:[% title_font_size %]; 
+                               line-height:1.2; 
+                               overflow:hidden; 
+                               max-height:100%;
+                               text-align:center;">
+                        [% title.split('\|').last || title %]
+                    </div>
+                </div>
+                
+                <!-- Layer 4 -->
+                <div class="layer layer4">
+                    <div class="half-width">
+                        <div class="small label">Auteur :</div>
+                        <div>[% author.split('\|').last || author %]</div>
+                    </div>
+                    <div class="half-width">
+                        <div class="small label">Année/Volume/Numéro :</div>
+                        <div>
+                            [% IF ccode == "REVUE" %]
+                                [% volume || "?" %]
+                            [% ELSE %]
+                                [% publicationyear || "?" %]
+                            [% END %]
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Layer 5 -->
+                <div class="layer layer5">
+                    <div class="small label">Remarques :</div>
+                    <div class="remarks-space"></div>
+                </div>
+                
+                <!-- Layer 6 -->
+                <div class="layer layer6">
+                    <div class="half-width left-align">
+                        <div class="status-list">
+                            <ul>
+                                <li>N° hors d'état de collection</li>
+                                <li>Hors d'usage</li>
+                                <li>Manquant</li>
+                                <li>En cours de traitement</li>
+                                <li>Cote erronée</li>
+                                <li>Autre :</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="half-width">
+                        <div class="barcode-area">[% barcode %]</div>
+                        <div class="barcode-number">[%  barcodenumber %]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-date">
+                Ce bulletin est à restituer avec le document en fin de consultation.  [% reservedate %]
+            </div>
+            
+        </div>
+        
+        <!-- COLONNE DE DROITE -->
+        <div class="column">
+            <div class="right-header">
+                <div class="bold center xtra-large">[% itemcallnumber %]</div>
+            </div>
+            
+            <div class="main-frame">
+                <!-- Layer 1 -->
+                <div class="layer layer1">
+                    <div class="small label">Date de communication :</div>
+                    <div class="medium">[% reservedate.split(' ').first %]</div>
+                </div>
+                
+                <!-- Layer 2 -->
+                <div class="layer layer2">
+                    <div class="small label">Demandé par :</div>
+                    <div class="bold large">[% surname %] [% firstname %]</div>
+                </div>
+                
+                <!-- Layer 3 -->
+                <div class="layer layer3">
+                    <div class="small label">Titre</div>
+                    <div class="medium" style="font-size:[% title_font_size %]; 
+                               line-height:1.2; 
+                               overflow:hidden; 
+                               max-height:100%;
+                               text-align:center;">
+                        [% title.split('\|').last || title %]
+                    </div>
+                </div>
+                
+                <!-- Layer 4 -->
+                <div class="layer layer4">
+                    <div class="half-width">
+                        <div class="small label">Auteur</div>
+                        <div>[% author.split('\|').last || author %]</div>
+                    </div>
+                    <div class="half-width">
+                        <div class="small label">Année/Volume/Numéro</div>
+                        <div>
+                            [% IF ccode == "REVUE" %]
+                                [% volume || "?" %]
+                            [% ELSE %]
+                                [% publicationyear || "?" %]
+                            [% END %]
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Layer 5 -->
+                <div class="layer layer5">
+                    <div class="small label">Observations :</div>
+                    <div class="observations-space"></div>
+                </div>
+                
+                <!-- Layer 6 -->
+                <div class="layer layer6">
+                    <div class="half-width left-align">
+                        <div class="status-list">
+                            <ul>
+                                <li>N° hors d'état de collection</li>
+                                <li>Hors d'usage</li>
+                                <li>Manquant</li>
+                                <li>En cours de traitement</li>
+                                <li>Cote erronée</li>
+                                <li>Autre :</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="half-width">
+                        <div class="barcode-area">[%  barcode %]</div>
+                        <div class="barcode-number">[%  barcodenumber %]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-date">[% reservedate %]</div>
+            
+        </div>
+    </div>
+</body>
+</html>

@@ -8,6 +8,7 @@ use Mojo::JSON qw(decode_json encode_json);
 
 use base qw(Koha::Plugins::Base);
 
+use CGI qw(-utf8);
 use Cwd qw(abs_path);
 use Encode qw(decode);
 use File::Slurp qw(read_file);
@@ -42,6 +43,7 @@ BEGIN {
     require Koha::WarehouseRequestStatus;
     require Koha::WarehouseRequests;
     require Koha::WarehouseRequest;
+    require Koha::WRMSlip;
     require Koha::Schema::Result::WarehouseRequest;
 
     # register the additional schema classes
@@ -53,14 +55,14 @@ BEGIN {
 
 
 ## Here we set our plugin version
-our $VERSION = '{VERSION}';
+our $VERSION = '1.9.0';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
     name            => 'Request From Stacks / Communication des documents en Magasin',
-    author          => 'Sicot Julien/Joncour Gwendal ; Bulac, Nicolas LEGRAND, Amaury GAU',
+    author          => 'Sicot Julien/Joncour Gwendal ; BULAC, Nicolas LEGRAND, Amaury GAU',
     date_authored   => '2019-06-25',
-    date_updated    => '2026-02-06',
+    date_updated    => '2026-03-13',
     minimum_version => '24.11',
     maximum_version => undef,
     version         => $VERSION,
@@ -89,7 +91,9 @@ sub new {
 
 sub tool {
     my ( $self, $args ) = @_;
+    my $cgi = CGI->new;
     my $query = $self->{'cgi'};
+
     
     if ( defined $query->param('op') ) {
         if ( $query->param('op') eq 'cud-creation' ) {
@@ -98,6 +102,8 @@ sub tool {
             $self->creation();
         } elsif ( $query->param('op') eq 'ticket' ) {
             $self->ticket();
+        } elsif ($query->param('op') eq 'printslip'){
+            return $self->printslip($cgi)
         }
     } else {
         my $template = $self->get_template({ file => 'templates/warehouse-requests.tt' });
@@ -435,6 +441,121 @@ sub intranet_js {
     my ($self) = @_;
 
     return read_file( abs_path( $self->mbf_path('js/intranet.js') ), { binmode => 'utf8' }  );
+}
+
+# Gération de bulletins de communication pour le module de Rennes2
+sub printslip {
+    my ($self, $cgi) = @_;
+    # Vérification des permissions
+    C4::Auth::checkauth($cgi, 0, { circulate => "circulate_remaining_permissions" }, 'intranet');
+
+    # Récupération des IDs depuis les paramètres CGI
+    # my $ids = scalar $cgi->param('id') // '';
+    # $ids =~ s/\s+//g;        # supprime espaces
+    # $ids =~ s/,+$//;         # supprime virgules finales
+    # my @ids = grep { $_ =~ /^\d+$/ } split(/,/, $ids);
+    
+    my $raw_ids= $cgi->param('id') // '';
+    $raw_ids =~ s/\s+//g;        # supprime espaces
+    $raw_ids =~ s/,+$//;         # supprime virgules finales
+    my @ids = grep { $_ =~ /^\d+$/ } split(/,/, $raw_ids);
+
+    # Génération des PDFs individuels
+    my (@pdfs, @errors);
+    foreach my $id (@ids) {
+        my ($pdf, $err);
+        try {
+            ($pdf, $err) = Koha::WRMSlip::generateSlip($self, $id);
+            if ($err) {
+                push @errors, "Erreur pour l'ID $id: $err";
+            } else {
+                push @pdfs, $pdf;
+            }
+        } catch {
+            push @errors, "Exception pour l'ID $id: $_";
+        };
+    }
+    # Si aucun PDF n'a été généré, retourner les erreurs
+    unless (@pdfs) {
+        return $cgi->header(-status => '500 Internal Server Error', -type => 'text/plain')
+               . "Aucun PDF généré. Erreurs:\n" . join("\n", @errors);
+    }
+
+    # Préparation des en-têtes HTTP
+    my %headers = (
+        -type => 'application/pdf',
+        -expires => 'now',
+    );
+
+    # Si un seul PDF, le retourner directement
+    if (@pdfs == 1) {
+        $headers{-disposition} = "inline; filename=bordereau_${ids[0]}.pdf";
+        $headers{-Content_length} = length($pdfs[0]);
+
+        print $cgi->header(%headers);
+        binmode STDOUT;
+        print $pdfs[0];
+        return;
+    }
+
+    # Si plusieurs PDFs, les combiner
+    try {
+        warn "Je tente d'en imprimer plusieurs";
+        my $combined_pdf = $self->combine_pdfs(@pdfs);
+        $headers{-disposition} = "inline; filename=bordereaux_combines_".scalar(@pdfs).".pdf";
+        $headers{-Content_length} = length($combined_pdf);
+
+        print $cgi->header(%headers);
+        binmode STDOUT;
+        print $combined_pdf;
+    } catch {
+        # En cas d'erreur lors de la combinaison, retourner le premier PDF avec un message d'erreur
+        print $cgi->header(
+            -type => 'application/pdf',
+            -disposition => "inline; filename=premier_bordereau.pdf",
+            -Content_length => length($pdfs[0]),
+            -expires => 'now',
+        );
+        binmode STDOUT;
+        print $pdfs[0];
+
+        # Journaliser l'erreur
+        warn "Erreur lors de la combinaison des PDFs: $_";
+    };
+
+    return;
+}
+
+# Méthode pour combiner plusieurs PDFs en un seul
+sub combine_pdfs {
+    my ($self, @pdfs) = @_;
+
+    # Création d'un répertoire temporaire pour les fichiers
+    my $temp_dir = File::Temp->newdir(CLEANUP => 1);
+
+    # Création des fichiers temporaires pour chaque PDF
+    my @temp_files;
+    foreach my $i (0..$#pdfs) {
+        my $temp_file = "$temp_dir/bordereau_$i.pdf";
+        write_file($temp_file, { binmode => ':raw' }, $pdfs[$i]);
+        push @temp_files, $temp_file;
+    }
+
+    # Préparation de la commande pdftk
+    my $output_file = "$temp_dir/bordereaux_combines.pdf";
+    my @pdfunite_cmd = ('pdfunite', @temp_files, $output_file);
+    # my @pdftk_cmd = ('pdftk', @temp_files, 'cat', 'output', $output_file);
+
+    # Exécution de la commande avec gestion des erreurs
+    my $error = system(@pdfunite_cmd);
+    if ($error) {
+        die "La commande pdfunite a échoué avec le code d'erreur: $error";
+    }
+
+    # Lecture du fichier PDF combiné
+    my $combined_pdf = read_file($output_file, binmode => ':raw');
+
+    return $combined_pdf;
 }
 
 sub configure {
