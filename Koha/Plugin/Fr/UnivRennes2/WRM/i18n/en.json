@@ -23,7 +23,7 @@
 	"PWD_LABEL_CONFIRM": "Confirm Password",
 	"SUCCESS_ALERT": "Success",
 	"ERROR_ALERT": "Error",
-	"SAVE_BUTTON": "<i class='fa fa-pencil'></i> Save",
+	"SAVE_BUTTON": "Save",
 	"CONF_ERROR": "Password confirmation does not match.",
 	"CONF_SUCCESS": "Configuration of the plugin has been successfully saved !"			
 }

@@ -238,7 +238,7 @@
 
                         <fieldset class="action">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> <span data-i18n-key="SAVE_BUTTON"></span>
+                                <span data-i18n-key="SAVE_BUTTON"></span>
                             </button>
                         </fieldset>
                     </form>

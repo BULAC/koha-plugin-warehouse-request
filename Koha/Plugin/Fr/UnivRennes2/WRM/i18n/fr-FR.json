@@ -21,7 +21,7 @@
 	"PWD_LABEL": "Mot de passe",
 	"SUCCESS_ALERT": "Succès",
 	"ERROR_ALERT": "Erreur",
-	"SAVE_BUTTON": "<i class='fa fa-pencil'></i> Enregistrer",
+	"SAVE_BUTTON": "Enregistrer",
 	"CONF_ERROR": "Les deux saisies du mot de passe RabbitMQ doivent être identiques.",
     "CONF_SUCCESS": "La configuration du plugin a été enregistrée avec succès !"
 }
