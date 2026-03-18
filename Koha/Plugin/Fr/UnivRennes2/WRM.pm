@@ -56,14 +56,14 @@ BEGIN {
 
 
 ## Here we set our plugin version
-our $VERSION = '1.9.0';
+our $VERSION = '2.0.1';
 
 ## Here is our metadata, some keys are required, some are optional
 our $metadata = {
     name            => 'Request From Stacks / Communication des documents en Magasin',
     author          => 'Sicot Julien/Joncour Gwendal ; BULAC, Nicolas LEGRAND, Amaury GAU',
     date_authored   => '2019-06-25',
-    date_updated    => '2026-03-13',
+    date_updated    => '2026-03-18',
     minimum_version => '24.11',
     maximum_version => undef,
     version         => $VERSION,
