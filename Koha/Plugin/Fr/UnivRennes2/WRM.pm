@@ -11,7 +11,7 @@ use base qw(Koha::Plugins::Base);
 use CGI qw(-utf8);
 use Cwd qw(abs_path);
 use Encode qw(decode);
-use File::Slurp qw(read_file);
+use File::Slurp qw(read_file write_file);
 use Try::Tiny;
 use Module::Metadata;
 
@@ -236,7 +236,7 @@ sub creation {
                     AddReserve({
                         branchcode     => $branchcode,
                         borrowernumber => $borrowernumber,
-                        biblionumber   => $biblio->biblionumber,  # <-- correction ici
+                        biblionumber   => $biblio->biblionumber,
                         itemnumber     => $itemnumber,
                         notes          => 'Demande de magasin impossible, document déjà en consultation par un autre lecteur.',
                     });

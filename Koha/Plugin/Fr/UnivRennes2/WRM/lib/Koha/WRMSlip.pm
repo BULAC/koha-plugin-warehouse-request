@@ -10,9 +10,10 @@ use Koha::Biblios;
 use Koha::Items;
 use Koha::Biblioitems;
 use Template;
-use File::Temp qw(tempfile);
 use IPC::System::Simple qw(system);
+use File::Temp qw(tempfile);
 use File::Basename;
+use File::Slurp qw (read_file write_file);
 use Barcode::Code128;
 
 use Koha::Plugin::Fr::UnivRennes2::WRM::Object::WarehouseRequests;
