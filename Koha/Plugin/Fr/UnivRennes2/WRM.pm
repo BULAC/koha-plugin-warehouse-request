@@ -416,8 +416,11 @@ sub opac_head {
 
 sub opac_js {
     my ($self) = @_;
-
-    return read_file( abs_path( $self->mbf_path('js/opac.js') ), { binmode => 'utf8' } );
+    my $js = read_file(
+        $self->mbf_path('js/opac.js'),
+        { binmode => ':utf8' }
+    );
+    return '<script>' . $js . '</script>';
 }
 
 sub intranet_head {
@@ -440,8 +443,11 @@ sub intranet_head {
 
 sub intranet_js {
     my ($self) = @_;
-
-    return read_file( abs_path( $self->mbf_path('js/intranet.js') ), { binmode => 'utf8' }  );
+    my $js = read_file(
+        $self->mbf_path('js/intranet.js'),
+        { binmode => ':utf8' }
+    );
+    return '<script>' . $js . '</script>';
 }
 
 # Gération de bulletins de communication pour le module de Rennes2

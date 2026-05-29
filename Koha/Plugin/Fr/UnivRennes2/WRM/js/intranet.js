@@ -1,4 +1,3 @@
-<script>
 $(document).ready(function() {
     // Home button injection
     if ($('#main_intranet-main').length > 0) {
@@ -70,43 +69,58 @@ $(document).ready(function() {
 
     // Member tabs table injection
     if ($('#circ_circulation, #pat_moremember').length > 0) {
-        
-        // Trouver le conteneur d'onglets Bootstrap
-        var $tabContainer = $('#patronlists, #finesholdsissues').first();
-        var $tabNav = $tabContainer.find('ul.nav-tabs').first();
+
+        var $tabContainer = $('#finesholdsissues');
+        if ($tabContainer.length === 0) {
+            $tabContainer = $('#patronlists');
+        }
+
+        var $tabNav     = $tabContainer.find('ul.nav-tabs').first();
         var $tabContent = $tabContainer.find('.tab-content').first();
 
         if ($tabNav.length === 0) {
-            // Fallback : chercher les nav-tabs globalement
-            $tabNav = $('ul.nav-tabs').first();
+            $tabNav     = $('ul.nav-tabs').first();
             $tabContent = $('.tab-content').first();
         }
 
-        // Créer le nouvel onglet (nav item)
-        var $newTab = $(
-            '<li class="nav-item">' +
-                '<a class="nav-link" id="wrm-tab" data-bs-toggle="tab" href="#warehouse-requests" role="tab">' +
-                    'Demandes magasin' +
-                '</a>' +
-            '</li>'
-        );
+        var borrowernumber = $('input[name="borrowernumber"]').val()
+            || $('input#borrowernumber').val()
+            || (window.location.search.match(/borrowernumber=(\d+)/) || [])[1]
+            || $('.patroninfo ul li.patronborrowernumber').text().replace(/\D/g, '');
 
-        // Créer le panneau de contenu
-        var $newPane = $(
-            '<div class="tab-pane" id="warehouse-requests" role="tabpanel">Chargement...</div>'
-        );
+        if (!borrowernumber) {
+            console.warn('WRM : borrowernumber introuvable, onglet non injecté');
+        } else {
 
-        // Injecter dans le DOM
-        $tabNav.append($newTab);
-        $tabContent.append($newPane);
+            var $newTab = $(
+                '<li class="nav-item">' +
+                    '<a class="nav-link" id="wrm-tab" data-bs-toggle="tab" ' +
+                        'href="#warehouse-requests" role="tab">' +
+                        'Demandes magasin (?)' +
+                    '</a>' +
+                '</li>'
+            );
 
-        // Charger les données au clic sur l'onglet
-        $newTab.find('a').on('shown.bs.tab', function() {
-            refreshWarehouseRequests();
-        });
+            var $newPane = $(
+                '<div class="tab-pane" id="warehouse-requests" role="tabpanel">' +
+                    '<p>Chargement...</p>' +
+                '</div>'
+            );
 
-        // Charger immédiatement si besoin
-        refreshWarehouseRequests();
+            $tabNav.append($newTab);
+            $tabContent.append($newPane);
+
+            $(document).on('shown.bs.tab', '#wrm-tab', function() {
+                refreshWarehouseRequests(borrowernumber);
+            });
+            // Compatibilité Bootstrap 4
+            $newTab.find('a').on('shown.bs.tab', function() {
+                refreshWarehouseRequests(borrowernumber);
+            });
+
+            // Chargement immédiat (pour afficher le compteur même si l'onglet n'est pas actif)
+            refreshWarehouseRequests(borrowernumber);
+        }
     }
 
     // Catalog detail link
@@ -127,75 +141,109 @@ $(document).ready(function() {
     }
 });
 
-function refreshWarehouseRequests() {
-    var borrowernumber = $('.patroninfo ul li.patronborrowernumber').text().replace(/\D/g, '');
+function refreshWarehouseRequests(borrowernumber) {
+
+    if (!borrowernumber) {
+        borrowernumber = $('input[name="borrowernumber"]').val()
+            || $('input#borrowernumber').val()
+            || (window.location.search.match(/borrowernumber=(\d+)/) || [])[1]
+            || $('.patroninfo ul li.patronborrowernumber').text().replace(/\D/g, '');
+    }
+
+    if (!borrowernumber) {
+        console.error('WRM refreshWarehouseRequests : borrowernumber indéfini');
+        return;
+    }
+
     $.get({
-        url: "/api/v1/contrib/wrm/list/" + borrowernumber,
+        url: "/api/v1/contrib/wrm/patrons/" + borrowernumber + '/requests',
         cache: true,
-        success: function (data) {
+        success: function(data) {
             var cnt = 0;
             var result = $('#warehouse-requests').empty();
-            result.append(`
-                        <table role="grid">
-                            <tbody>
-                            </tbody>
-                        </table>
-                        `);
+
+            result.append(
+                '<table role="grid">' +
+                    '<tbody></tbody>' +
+                '</table>'
+            );
+
             if (data.length > 0) {
-                result.find('table').prepend(`
-                                <thead>
-                                    <tr>
-                                        <th>N°</th>
-                                        <th>Informations</th>
-                                        <th>Demandé le</th>
-                                        <th>A chercher avant le</th>
-                                        <th>Statut</th>
-                                        <th>Site de retrait</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                            `);
+                result.find('table').prepend(
+                    '<thead>' +
+                        '<tr>' +
+                            '<th>N°</th>' +
+                            '<th>Informations</th>' +
+                            '<th>Demandé le</th>' +
+                            '<th>À chercher avant le</th>' +
+                            '<th>Statut</th>' +
+                            '<th>Site de retrait</th>' +
+                            '<th></th>' +
+                        '</tr>' +
+                    '</thead>'
+                );
+
                 for (var i = 0; i < data.length; i++) {
-                    // console.log(data[i]);
-                    var cd = new Date(data[i].created_on);
-                    var rd = new Date(data[i].deadline);
-                    var infoBlock = '<div><a class="strong" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber=' + data[i].biblionumber + '" title="' + data[i].biblio.title + '">' + data[i].biblio.title + '</a></div>';
-                    if (data[i].biblio.author != '' && data[i].biblio.author != undefined) {
-                        infoBlock += '<div>' + data[i].biblio.author + '</div>';
+                    var item = data[i];
+                    var cd = new Date(item.created_on);
+                    var rd = item.deadline ? new Date(item.deadline) : null;
+
+                    // Bloc infos document
+                    var infoBlock = '<div><a class="strong" href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='
+                        + item.biblionumber + '" title="' + (item.biblio.title || '') + '">'
+                        + (item.biblio.title || '') + '</a></div>';
+
+                    if (item.biblio.author) {
+                        infoBlock += '<div>' + item.biblio.author + '</div>';
                     }
-                    if (data[i].item.itemcallnumber != '' && data[i].item.itemcallnumber != undefined) {
-                        infoBlock += '<div>Cote : ' + data[i].item.itemcallnumber + '</div><div>Code-barres : ' + data[i].item.barcode + '</div>';
+                    if (item.item && item.item.itemcallnumber) {
+                        infoBlock += '<div>Cote : ' + item.item.itemcallnumber
+                            + '</div><div>Code-barres : ' + (item.item.barcode || '') + '</div>';
                     }
+
                     var extInfoBlock = [];
-                    if (data[i].volume != '' && data[i].volume != undefined) extInfoBlock.push('<span class="label">Volume(s) : ' + data[i].volume + '</span>');
-                    if (data[i].issue != '' && data[i].issue != undefined) extInfoBlock.push('<span class="label">Numéro(s) : ' + data[i].issue + '</span>');
-                    if (data[i].date != '' && data[i].date != undefined) extInfoBlock.push('<span class="label">Date : ' + data[i].date + '</span>');
+                    if (item.volume) extInfoBlock.push('<span class="label">Volume(s) : ' + item.volume + '</span>');
+                    if (item.issue)  extInfoBlock.push('<span class="label">Numéro(s) : ' + item.issue + '</span>');
+                    if (item.date)   extInfoBlock.push('<span class="label">Date : ' + item.date + '</span>');
                     if (extInfoBlock.length > 0) infoBlock += '<br />' + extInfoBlock.join(' | ');
-                    result.find('tbody').append(`
-                                    <tr>
-                                        <td>`+ data[i].id + `</td>
-                                        <td>`+ infoBlock + `</td>
-                                        <td>`+ cd.toLocaleDateString() + ' ' + cd.toLocaleTimeString() + `</td>
-                                        <td>`+ rd.toLocaleDateString() + `</td>
-                                        <td class="nowrap">`+ decodeURIComponent(data[i].statusstr) + `</td>
-                                        <td>`+ data[i].branchname + `</td>
-                                        <td class="text-center">`+
-                        (['CANCELED', 'COMPLETED'].indexOf(data[i].status) < 0 ?
-                            '<div class="btn-group">' +
-                            (data[i].status == 'WAITING' ? '<a data-id="' + data[i].id + '" title="Terminer la demande" class="complete-wr btn-xs btn btn-success"><i class="fa fa-fw fa-check"></i> Terminer</a>' : '') +
-                            '<a data-id="' + data[i].id + '" title="Annuler la demande" class="cancel-wr btn-xs btn btn-danger"><i class="fa fa-fw fa-close"></i> Annuler</a>' +
-                            '</div>'
-                            : '') +
-                        (data[i].status == 'CANCELED' ? '<div class="reason">' + data[i].notes + '</div>' : '')
-                        + `</td>
-                                    </tr>
-                                `);
-                    if (['CANCELED', 'COMPLETED'].indexOf(data[i].status) < 0) {
+
+                    // Boutons action
+                    var actionBlock = '';
+                    if (['CANCELED', 'COMPLETED'].indexOf(item.status) < 0) {
+                        actionBlock = '<div class="btn-group">';
+                        if (item.status === 'WAITING') {
+                            actionBlock += '<a data-id="' + item.id
+                                + '" title="Terminer la demande" class="complete-wr btn-xs btn btn-success">'
+                                + '<i class="fa fa-fw fa-check"></i> Terminer</a>';
+                        }
+                        actionBlock += '<a data-id="' + item.id
+                            + '" title="Annuler la demande" class="cancel-wr btn-xs btn btn-danger">'
+                            + '<i class="fa fa-fw fa-close"></i> Annuler</a>'
+                            + '</div>';
                         cnt++;
                     }
+                    if (item.status === 'CANCELED') {
+                        actionBlock += '<div class="reason">' + (item.notes || '') + '</div>';
+                    }
+
+                    var deadlineStr = rd ? rd.toLocaleDateString() : '-';
+
+                    result.find('tbody').append(
+                        '<tr>' +
+                            '<td>' + item.id + '</td>' +
+                            '<td>' + infoBlock + '</td>' +
+                            '<td>' + cd.toLocaleDateString() + ' ' + cd.toLocaleTimeString() + '</td>' +
+                            '<td>' + deadlineStr + '</td>' +
+                            '<td class="nowrap">' + decodeURIComponent(item.statusstr) + '</td>' +
+                            '<td>' + (item.branchname || '') + '</td>' +
+                            '<td class="text-center">' + actionBlock + '</td>' +
+                        '</tr>'
+                    );
                 }
-                $('#wrm-tab').text('Demandes magasin ('+ cnt +')');
-                $('#warehouse-requests table').dataTable($.extend(true, {}, dataTablesDefaults, {
+
+                $('#wrm-tab').text('Demandes magasin (' + cnt + ')');
+
+                result.find('table').dataTable($.extend(true, {}, dataTablesDefaults, {
                     "sDom": 't',
                     "aaSorting": [[0, "desc"]],
                     "aoColumnDefs": [
@@ -203,50 +251,55 @@ function refreshWarehouseRequests() {
                     ],
                     "bPaginate": false
                 }));
-                $('#circ_circulation .complete-wr, #pat_moremember .complete-wr').click(function () {
-                    var id = $(this).attr('data-id');
+
+                result.off('click', '.complete-wr').on('click', '.complete-wr', function() {
+                    var id = $(this).data('id');
                     $.ajax({
                         type: "POST",
                         url: "/api/v1/contrib/wrm/update_status",
-                        data: {
-                            id: id,
-                            action: 'complete',
-                        },
-                        success: function (data) {
+                        data: { id: id, action: 'complete' },
+                        success: function() {
                             alert('La demande a été terminée avec succès');
-                            refreshWarehouseRequests();
+                            refreshWarehouseRequests(borrowernumber);
                         },
-                        error: function (data) {
-                            alert(data.error);
+                        error: function(xhr) {
+                            alert('Erreur : ' + (xhr.responseJSON ? xhr.responseJSON.error : xhr.responseText));
                         }
                     });
                 });
-                $('#circ_circulation .cancel-wr, #pat_moremember .cancel-wr').click(function () {
+
+                result.off('click', '.cancel-wr').on('click', '.cancel-wr', function() {
                     var notes = prompt('Raison de l\'annulation :');
                     if (notes !== null) {
-                        var id = $(this).attr('data-id');
+                        var id = $(this).data('id');
                         $.ajax({
                             type: "POST",
                             url: "/api/v1/contrib/wrm/update_status",
-                            data: {
-                                id: id,
-                                action: 'cancel',
-                                notes: notes,
-                            },
-                            success: function (data) {
+                            data: { id: id, action: 'cancel', notes: notes },
+                            success: function() {
                                 alert('La demande a été annulée avec succès');
-                                refreshWarehouseRequests();
+                                refreshWarehouseRequests(borrowernumber);
                             },
-                            error: function (data) {
-                                alert(data.error);
+                            error: function(xhr) {
+                                alert('Erreur : ' + (xhr.responseJSON ? xhr.responseJSON.error : xhr.responseText));
                             }
                         });
                     }
                 });
+
             } else {
-                result.find('tbody').append('<tr><td>L\'adhérent n\'a pas de demandes magasin en cours.</td></tr>');
+                result.find('tbody').append(
+                    '<tr><td colspan="7">L\'adhérent n\'a pas de demandes magasin en cours.</td></tr>'
+                );
+                $('#wrm-tab').text('Demandes magasin (0)');
             }
+        },
+        error: function(xhr) {
+            console.error('WRM API error:', xhr.status, xhr.responseText);
+            $('#warehouse-requests').html(
+                '<p class="alert alert-danger">Erreur lors du chargement des demandes (HTTP '
+                + xhr.status + ').</p>'
+            );
         }
     });
 }
-</script>

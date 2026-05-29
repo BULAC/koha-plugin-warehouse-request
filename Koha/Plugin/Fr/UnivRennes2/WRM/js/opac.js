@@ -1,4 +1,3 @@
-<script>
 let wr_borrowernumber;
 
 $(document).ready(function() {
@@ -173,4 +172,3 @@ function colorStatus(str, code) {
     }
     return '<span class="' + cls + '">' + str + '</span>';
 }
-</script>
