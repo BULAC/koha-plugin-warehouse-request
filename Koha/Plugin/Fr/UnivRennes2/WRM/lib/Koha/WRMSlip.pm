@@ -13,8 +13,9 @@ use Template;
 use IPC::System::Simple qw(system);
 use File::Temp qw(tempfile);
 use File::Basename;
-use File::Slurp qw (read_file write_file);
+use File::Slurp qw(read_file write_file);
 use Barcode::Code128;
+use Encode qw(decode encode is_utf8);
 
 use Koha::Plugin::Fr::UnivRennes2::WRM::Object::WarehouseRequests;
    
@@ -81,29 +82,28 @@ sub generateSlip {
     else                         { $title_font_size = '7pt';  }
 
     my $vars = {
-        barcode             => $barcode_html,
-        barcodenumber       => $barcode_text,
-        reservedate         => $wr->created_on,
-        notes               => $wr->notes,
-        firstname           => $patron->firstname,
-        surname             => $patron->surname,
-        desk                => $desk,
-        itemcallnumber      => $item->itemcallnumber,
-        ccode               => $item->ccode,
-        itype               => $item->itype,
-        volume              => $item->enumchron,
-        publicationyear     => $biblioitem->publicationyear,
-        title               => $biblio->title,
+        barcode             => $barcode_html,  # binaire base64, pas de pb
+        barcodenumber       => _to_utf8($barcode_text),
+        reservedate         => _to_utf8($wr->created_on),
+        notes               => _to_utf8($wr->notes),
+        firstname           => _to_utf8($patron->firstname),
+        surname             => _to_utf8($patron->surname),
+        desk                => _to_utf8($desk),
+        itemcallnumber      => _to_utf8($item->itemcallnumber),
+        ccode               => _to_utf8($item->ccode),
+        itype               => _to_utf8($item->itype),
+        volume              => _to_utf8($item->enumchron),
+        publicationyear     => _to_utf8($biblioitem->publicationyear),
+        title               => _to_utf8($biblio->title),
         title_font_size     => $title_font_size,
-        author              => $biblio->author,
+        author              => _to_utf8($biblio->author),
         borrowernumber      => $wr->borrowernumber,
-        location            => $item->location,
-        #physical_address    => $item->physical_address,
-        cardnumber          => $patron->cardnumber,
+        location            => _to_utf8($item->location),
+        cardnumber          => _to_utf8($patron->cardnumber),
         notforloan          => $item->notforloan,
         damaged             => $item->damaged,
         itemlost            => $item->itemlost,
-    }; 
+    };
 
 
     my $tt = Template->new({
@@ -150,6 +150,22 @@ sub generateSlip {
     unlink $pdf_filename;
 
     return ($pdf_binary, undef);
+}
+
+sub _to_utf8 {
+    my $str = shift;
+    return '' unless defined $str;
+    # Si déjà marquée UTF-8 par Perl, on la retourne telle quelle
+    if (is_utf8($str)) {
+        return $str;
+    }
+    # Sinon on tente de la décoder depuis l'UTF-8 binaire
+    my $decoded = eval { decode('UTF-8', $str, Encode::FB_CROAK) };
+    if ($@) {
+        # Si ça échoue, on suppose Latin-1
+        $decoded = decode('Latin-1', $str);
+    }
+    return $decoded;
 }
 
 1;
