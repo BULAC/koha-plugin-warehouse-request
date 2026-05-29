@@ -166,9 +166,12 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                             itemnumber       => $wr->item->itemnumber(),
                             found            => 'W',
                             itemtype         => $wr->item->itype(),
-                            desk_id          => $desk_id,
                            });
-    #        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+
+    if ($desk_id && $resid) {
+        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id );
+    }
+
     my $res = Koha::Holds->find($resid);
 
     $template->param(
@@ -193,9 +196,12 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                             itemnumber       => $wr->item->itemnumber(),
                             found            => 'W',
                             itemtype          => $wr->item->itype(),
-                            desk_id             => $desk_id,
                            });
-    #    ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id);
+
+    if ($desk_id && $resid) {
+        ModReserveAffect( $wr->item->itemnumber, $wr->borrower->borrowernumber, '', $resid, $desk_id );
+    }
+    
     my $res = Koha::Holds->find($resid);
 
     $template->param(
