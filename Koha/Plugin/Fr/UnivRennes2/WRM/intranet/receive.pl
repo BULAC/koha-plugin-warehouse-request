@@ -179,6 +179,7 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                      reserve => $res,
                      op      => $op,
                      patron  => $patron,
+                     desk    => $desk,
                     )
 } elsif ($op eq "cancel" and $wrid >= 0) {
     my $wr = Koha::WarehouseRequests->find( $wrid );
@@ -210,6 +211,7 @@ if ($barcode_type eq "item" and $op eq "confirm") {
                      reserve => $res,
                      op      => $op,
                      patron  => $patron,
+                     desk    => $desk,
                     )
 }
 

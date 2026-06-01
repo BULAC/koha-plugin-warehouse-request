@@ -106,7 +106,7 @@
                             [% patron.firstname | html %]
                             [% patron.surname | html %]
                             <strong>([% patron.cardnumber | html %])</strong>,
-                            à la banque [% desk.desk_name | html %].</p>
+                            à la banque <strong>[% desk.desk_name | html %]<strong>.</p>
                             <form name="cancelReserve" action="/cgi-bin/koha/circ/waitingreserves.pl" method="post">
                                 [% INCLUDE 'csrf-token.inc' %]
                                 <input type="hidden" name="borrowernumber" value="[% patron.borrowernumber |html %]">
