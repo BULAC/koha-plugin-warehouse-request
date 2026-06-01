@@ -316,10 +316,10 @@
                     <div class="half-width">
                         <div class="small label">Année/Volume/Numéro :</div>
                         <div>
-                            [% IF ccode == "REVUE" %]
+                            [% IF ccode == "REVUE" || itype=="DOC-TMP-MG"  %]
                                 [% volume || "?" %]
                             [% ELSE %]
-                                [% publicationyear || "?" %]
+                                <div>[% publicationyear || "?" %]</div>
                             [% END %]
                         </div>
                     </div>
@@ -397,10 +397,10 @@
                     <div class="half-width">
                         <div class="small label">Année/Volume/Numéro</div>
                         <div>
-                            [% IF ccode == "REVUE" %]
+                            [% IF ccode == "REVUE" || itype=="DOC-TMP-MG"  %]
                                 [% volume || "?" %]
                             [% ELSE %]
-                                [% publicationyear || "?" %]
+                                <div>[% publicationyear || "?" %]</div>
                             [% END %]
                         </div>
                     </div>
