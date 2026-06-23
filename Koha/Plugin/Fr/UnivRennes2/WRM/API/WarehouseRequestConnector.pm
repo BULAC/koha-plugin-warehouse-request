@@ -633,15 +633,28 @@ sub _to_api {
         "title" => $biblio->title,
         "author" => $biblio->author
     };
-    $request->{item} = {
-        "holdingbranch" => $item->holding_branch->branchname,
-         #"location" => Koha::AuthorisedValues->find_by_koha_field( { kohafield => 'items.location', authorised_value => $item->location } )->lib,
-        "location" => $item->location,
-        "itemtype" => Koha::ItemTypes->find( $item->effective_itemtype )->description,
-        "itemcallnumber" => $item->itemcallnumber,
-        "barcode" => $item->barcode
-    };
-    if ($bystatus) {
+    if ($item) {
+        $request->{item} = {
+            "holdingbranch" => $item->holding_branch->branchname,
+            #"location" => Koha::AuthorisedValues->find_by_koha_field( { kohafield => 'items.location', authorised_value => $item->location } )->lib,
+            "location" => $item->location,
+            "itemtype" => Koha::ItemTypes->find( $item->effective_itemtype )->description,
+            "itemcallnumber" => $item->itemcallnumber,
+            "barcode" => $item->barcode
+        };
+    } else  {
+        # Si l'exemplaire a été supprimé
+        $request->{item} = {
+            "holdingbranch" => 'Exemplaire supprimé',
+            "location" => '',
+            "itemtype" => '',
+            "itemcallnumber" => '',
+            "barcode" => ''
+        };
+    }
+
+    
+    if ($bystatus && borrowernumber) {
         $request->{borrower} = {
             "firstname" => $borrower->firstname,
             "surname" => $borrower->surname,
