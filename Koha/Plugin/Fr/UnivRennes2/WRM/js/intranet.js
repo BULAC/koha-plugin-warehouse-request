@@ -21,16 +21,19 @@ $(document).ready(function() {
     }
     // Circ homepage button injection
     if ($('#circ_circulation-home').length > 0) {
-        var wrbutton = '<li><a class="circ-button" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing" title="Demandes magasins"><i class="fa fa-file-text"></i> Demandes magasins</a></li><li><a class="circ-button" href="/receive.pl" title="Réception"><i class="fa fa-rocket"></i> Réception</a></li>';
-        var requestsMenu = $('i.fa-newspaper-o').parents('ul.buttons-list');
-        if (requestsMenu.length > 0) {
-            requestsMenu.prepend(wrbutton);
+        var wrbutton = '<h3>Demandes des adhérents</h3><ul class="buttons-list"><li><a class="circ-button" href="/cgi-bin/koha/plugins/run.pl?class=Koha%3A%3APlugin%3A%3AFr%3A%3AUnivRennes2%3A%3AWRM&method=tool#warehouse-requests-processing" title="Demandes magasins"><i class="fa fa-file-text"></i> Demandes magasins</a></li><li><a class="circ-button" href="/receive.pl" title="Réception"><i class="fa fa-rocket"></i> Réception</a></li></ul>';
+
+        var $thirdCol = $('a[href*="transferstoreceive.pl"]').closest('div.col-12, div[class*="col-sm-"]');
+
+        if ($thirdCol.length > 0) {
+            $thirdCol.find('h3').first().before(wrbutton);
         } else {
+            // Filet de sécurité si jamais cette colonne n'existe pas dans le DOM
             var delayedColumn = $('h3:contains("Retards")').parent();
             if (delayedColumn.length > 0) {
-                delayedColumn.prepend('<h3>Demandes des adhérents</h3><ul class="buttons-list">' + wrbutton + '</ul>');
+                delayedColumn.prepend(wrbutton);
             } else {
-                $('#circ_circulation-home div.main > div.row:first-child > div:last-child').prepend('<h3>Demandes des adhérents</h3><ul class="buttons-list">' + wrbutton + '</ul>');
+                $('#circ_circulation-home .row').first().append('<div class="col-12 col-sm-4">' + wrbutton + '</div>');
             }
         }
     }
